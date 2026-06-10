@@ -1,6 +1,6 @@
 from enum import Enum
 
-class JobStatus(str, Enum):
+class DownloadStatus(str, Enum):
     PENDING = "PENDING"
     PROCESSING = "PROCESSING"
     COMPLETED = "COMPLETED"

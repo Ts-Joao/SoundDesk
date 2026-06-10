@@ -1,5 +1,6 @@
+import uuid
 from sqlalchemy import String, Integer, Enum, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.enums.track_status import TrackStatus
 from app.database.base import Base, TimestampMixin
@@ -41,4 +42,15 @@ class Track(Base, TimestampMixin):
         Enum(TrackStatus, name="track_status"),
         nullable=False,
         default=TrackStatus.PENDING,
+    )
+
+    playlists = relationship(
+        "Playlist",
+        secondary="playlist_track",
+        back_populates="tracks",
+    )
+
+    downloads = relationship(
+        "DownloadJob",
+        back_populates="track",
     )

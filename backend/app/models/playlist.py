@@ -1,5 +1,5 @@
 from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin
 
@@ -13,4 +13,10 @@ class Playlist(Base, TimestampMixin):
 
     description: Mapped[str] = mapped_column(
         String(),
+    )
+
+    tracks = relationship(
+        "Track",
+        secondary="playlist_tracks",
+        back_populates="playlists",
     )
