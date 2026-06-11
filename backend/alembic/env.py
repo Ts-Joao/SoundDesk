@@ -4,7 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from app.database.base import Base
-from app.models.playlist import Playlist
+from app.models import *
 
 from app.database.config import DATABASE_URL
 
