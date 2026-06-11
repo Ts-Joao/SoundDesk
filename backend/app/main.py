@@ -1,15 +1,8 @@
 from fastapi import FastAPI
-from sqlalchemy import text
 
-from app.database.session import engine
+from app.api.playlists import router as playlist_router
+
 
 app = FastAPI(title="SoundDesk API")
 
-@app.get("/health")
-def health():
-    with engine.connect() as conn:
-        conn.execute(text("SELECT 1"))
-
-    return {
-        "status": "ok"
-    }
+app.include_router(playlist_router)
