@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.core.exceptions import PlaylistNotFoundException
+from app.core.exceptions import NotFoundException
 from app.repositories.playlist_repository import PlaylistRepository
 from app.schemas.playlist import CreatePlaylistSchema, UpdatePlaylistSchema
 
@@ -19,7 +19,7 @@ class PlaylistService:
         playlist = self.repository.find_by_id(playlist_id)
 
         if not playlist:
-            raise PlaylistNotFoundException
+            raise NotFoundException("Playlist not found")
 
         return playlist
 

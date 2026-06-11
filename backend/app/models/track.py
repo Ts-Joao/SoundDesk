@@ -45,7 +45,7 @@ class Track(Base, TimestampMixin):
 
     playlists = relationship(
         "Playlist",
-        secondary="playlist_track",
+        secondary="playlist_tracks",
         back_populates="tracks",
     )
 

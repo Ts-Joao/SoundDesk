@@ -1,8 +1,22 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
+from app.core.exceptions import AppException
 from app.api.playlists import router as playlist_router
 
 
 app = FastAPI(title="SoundDesk API")
+
+@app.exception_handler(AppException)
+async def app_exception_handler(
+        request: Request,
+        exc: AppException
+):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "message": exc.message
+        },
+    )
 
 app.include_router(playlist_router)

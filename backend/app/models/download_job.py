@@ -15,9 +15,9 @@ class DownloadJob(Base, TimestampMixin):
         nullable=False,
     )
 
-    tracks = relationship(
-        "Tracks",
-        back_populates="downloadJob",
+    track = relationship(
+        "Track",
+        back_populates="downloads",
     )
 
     status: Mapped[DownloadStatus] = mapped_column(
