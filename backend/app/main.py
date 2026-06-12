@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.exceptions import AppException
 from app.api.playlists import router as playlist_router
+from app.api.tracks import router as track_router
 
 
 app = FastAPI(title="SoundDesk API")
@@ -20,3 +21,4 @@ async def app_exception_handler(
     )
 
 app.include_router(playlist_router)
+app.include_router(track_router)
