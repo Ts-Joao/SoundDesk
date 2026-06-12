@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import Depends, APIRouter
-from requests import Session
+from sqlalchemy.orm import Session
 
 from app.database.dependencies import get_db
 from app.repositories.playlist_repository import PlaylistRepository
@@ -12,7 +12,7 @@ from app.schemas.track import TrackResponseSchema
 from app.services.playlist_track_service import PlaylistTrackService
 
 
-router = APIRouter(prefix="/playlist", tags=["Playlist Tracks"])
+router = APIRouter(prefix="/playlist-tracks", tags=["Playlist Tracks"])
 
 @router.post(
     "/{playlist_id}/tracks/{track_id}"
