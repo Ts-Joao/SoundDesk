@@ -9,7 +9,7 @@ class PlaylistService:
     def __init__(self, repository: PlaylistRepository):
         self.repository = repository
 
-    def crate(self, data: CreatePlaylistSchema):
+    def create(self, data: CreatePlaylistSchema):
         return self.repository.create(data)
 
     def find_all(self):

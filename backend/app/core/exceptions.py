@@ -9,3 +9,6 @@ class AppException(Exception):
 
 class NotFoundException(AppException):
     status_code = 404
+
+class ConflictException(AppException):
+    status_code = 409
