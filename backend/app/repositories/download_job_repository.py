@@ -67,3 +67,17 @@ class DownloadJobRepository:
             )
             .first()
         )
+
+    def update_status(
+            self,
+            job_id: UUID,
+            status: DownloadStatus,
+    ):
+        job = self.find_by_id(job_id)
+
+        job.status = status
+
+        self.db.commit()
+        self.db.refresh(job_id)
+
+        return job
