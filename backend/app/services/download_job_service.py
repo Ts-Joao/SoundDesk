@@ -40,19 +40,7 @@ class DownloadJobService:
                 track_id=track.id
             )
 
-            self.repository.update_status(
-                job_id=job.id,
-                status=DownloadStatus.PROCESSING
-            )
-
-            process_download.delay(
-                str(job.id)
-            )
-
-            self.repository.update_status(
-                job_id=job.id,
-                status=DownloadStatus.COMPLETED
-            )
+            process_download.delay(job.id)
 
             jobs_created += 1
 

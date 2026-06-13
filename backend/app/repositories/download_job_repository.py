@@ -72,12 +72,14 @@ class DownloadJobRepository:
             self,
             job_id: UUID,
             status: DownloadStatus,
+            error_message: str | None = None,
     ):
         job = self.find_by_id(job_id)
 
         job.status = status
+        job.error_message = error_message
 
         self.db.commit()
-        self.db.refresh(job_id)
+        self.db.refresh(job)
 
         return job
