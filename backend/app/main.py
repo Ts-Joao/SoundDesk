@@ -4,7 +4,6 @@ from fastapi.responses import JSONResponse
 from app.core.exceptions import AppException
 from app.api.playlists import router as playlist_router
 from app.api.tracks import router as track_router
-from app.workers.tasks import test_task
 from app.api.playlist_tracks import router as playlist_tracks_router
 from app.api.downloads import router as downloads_router
 

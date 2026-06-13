@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from app.core.exceptions import NotFoundException
+from app.enums.track_status import TrackStatus
 from app.repositories.track_repository import TrackRepository
 from app.schemas.track import CreateTrackSchema, UpdateTrackSchema
 
@@ -36,3 +37,18 @@ class TrackService:
         track = self.find_by_id(track_id)
 
         return self.repository.delete(track)
+
+    def set_processing(self, track_id: UUID):
+        track = self.find_by_id(track_id)
+
+        self.repository.update_status(track, status=TrackStatus.PROCESSING)
+
+    def set_finished(self, track_id: UUID):
+        track = self.find_by_id(track_id)
+
+        self.repository.update_status(track, status=TrackStatus.READY)
+
+    def failed(self, track_id: UUID):
+        track = self.find_by_id(track_id)
+
+        self.repository.update_status(track, status=TrackStatus.FAILED)

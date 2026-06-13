@@ -44,3 +44,7 @@ alembic/versions/__pycache__/
 
 # Docker
 docker-data/
+
+# Storage
+storage/covers
+storage/downloads
