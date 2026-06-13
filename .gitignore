@@ -47,4 +47,7 @@ docker-data/
 
 # Storage
 storage/covers/*
+!storage/covers/.gitkeep
+
 storage/downloads/*
+!storage/downloads/.gitkeep
