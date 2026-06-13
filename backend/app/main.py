@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from app.api.exports import router as export_playlist
 from app.core.exceptions import AppException
 from app.api.playlists import router as playlist_router
 from app.api.tracks import router as track_router
@@ -22,15 +23,8 @@ async def app_exception_handler(
         },
     )
 
-@app.get("/test")
-def test():
-    test_task.delay()
-
-    return {
-       "message": "Task sent successfully"
-    }
-
 app.include_router(playlist_router)
 app.include_router(track_router)
 app.include_router(playlist_tracks_router)
 app.include_router(downloads_router)
+app.include_router(export_playlist)
