@@ -1,7 +1,7 @@
 fastapi
 uvicorn[standard]
-redis
-celery
+celery==5.5.*
+redis==6.*
 sqlalchemy==2.0.*
 alembic==1.16.*
 psycopg2-binary==2.9.*
