@@ -137,3 +137,16 @@ class ExportJobService:
         print(str(export_job.file_path))
 
         return str(export_job.file_path)
+
+    def delete(
+            self,
+            job_id: UUID,
+    ):
+        export_job = self.find_by_id(job_id)
+
+        if export_job.file_path:
+            file_path = Path("storage") / export_job.file_path
+            if file_path.exists():
+                file_path.unlink()
+
+        return self.repository.delete(job_id)

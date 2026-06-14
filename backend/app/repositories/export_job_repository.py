@@ -62,3 +62,11 @@ class ExportJobRepository:
         self.db.refresh(job)
 
         return job
+
+    def delete(self, job_id: UUID):
+        job = self.find_by_id(job_id)
+
+        self.db.delete(job)
+        self.db.commit()
+
+        return job

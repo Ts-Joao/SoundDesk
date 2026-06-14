@@ -1,3 +1,4 @@
+from pathlib import Path
 from uuid import UUID
 
 from app.core.exceptions import NotFoundException
@@ -35,6 +36,16 @@ class TrackService:
 
     def delete(self, track_id: UUID):
         track = self.find_by_id(track_id)
+
+        if track.file_path:
+            file_path = Path("storage") / track.file_path
+            if file_path.exists():
+                file_path.unlink()
+
+        if track.cover_path:
+            cover_path = Path("storage") / track.cover_path
+            if cover_path.exists():
+                cover_path.unlink()
 
         return self.repository.delete(track)
 
