@@ -66,7 +66,7 @@ def update(
 
 @router.delete(
     "/{track_id}",
-    response_model=TrackResponseSchema,
+    status_code=204
 )
 def delete(
         track_id: UUID,
@@ -75,4 +75,4 @@ def delete(
     repository = TrackRepository(db)
     service = TrackService(repository)
 
-    return service.delete(track_id)
+    service.delete(track_id)

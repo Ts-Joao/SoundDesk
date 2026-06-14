@@ -25,6 +25,9 @@ class ExportJobRepository:
 
         return job
 
+    def find_all(self):
+        return self.db.query(ExportJob).all()
+
     def find_by_id(
             self,
             job_id: UUID
@@ -42,6 +45,19 @@ class ExportJobRepository:
         job.status = status
         job.error_message = error_message
 
+        self.db.commit()
+        self.db.refresh(job)
+
+        return job
+
+    def update_path(
+            self,
+            job_id: UUID,
+            path: str
+    ):
+        job = self.find_by_id(job_id)
+
+        job.file_path = path
         self.db.commit()
         self.db.refresh(job)
 

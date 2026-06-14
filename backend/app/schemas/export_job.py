@@ -12,6 +12,8 @@ class ExportJobResponseSchema(BaseModel):
 
     status: DownloadStatus
 
+    file_path: str | None = None
+
     error_message: str | None = None
 
     started_at: datetime | None

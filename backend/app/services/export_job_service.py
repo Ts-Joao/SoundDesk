@@ -2,6 +2,7 @@ import zipfile
 from pathlib import Path
 from uuid import UUID
 
+from app.core.exceptions import BadRequestException
 from app.enums.export_status import ExportStatus
 from app.enums.track_status import TrackStatus
 from app.models import Playlist
@@ -34,6 +35,9 @@ class ExportJobService:
 
         return job
 
+    def find_all(self):
+        return self.repository.find_all()
+
     def find_by_id(self, job_id: UUID) -> ExportJob:
         return self.repository.find_by_id(job_id)
 
@@ -45,6 +49,13 @@ class ExportJobService:
             job_id: UUID,
     ):
         return self.repository.update_status(job_id, ExportStatus.PROCESSING)
+
+    def update_path(
+            self,
+            job_id: UUID,
+            path: str
+    ):
+        return self.repository.update_path(job_id, path)
 
     def complete_export(
             self,
@@ -105,9 +116,24 @@ class ExportJobService:
 
             zip_path = self.create_zip(playlist)
 
+            self.update_path(job_id, zip_path)
+
             self.complete_export(job_id)
 
             return str(zip_path)
 
         except Exception as exc:
             self.fail(job_id, str(exc))
+
+    def get_zip(
+            self,
+            job_id: UUID,
+    ):
+        export_job = self.find_by_id(job_id)
+
+        if export_job.status != ExportStatus.COMPLETED:
+            raise BadRequestException("Zip not available")
+
+        print(str(export_job.file_path))
+
+        return str(export_job.file_path)

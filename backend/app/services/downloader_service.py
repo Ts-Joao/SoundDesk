@@ -1,6 +1,7 @@
 from pathlib import Path
 from uuid import UUID
 from typing import Any
+import re
 
 import requests
 import yt_dlp
@@ -77,7 +78,9 @@ class DownloaderService:
     def download_audio(self, source_url: str, title: str) -> str:
         self.DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
-        output_template = self.DOWNLOADS_DIR / f"{title}.%(ext)s"
+        safe_title = re.sub(r'[<>:"/\\|?*]', "", title)
+
+        output_template = self.DOWNLOADS_DIR / f"{safe_title}.%(ext)s"
 
         options: dict[str, Any] = {
             "format": "bestaudio/best",

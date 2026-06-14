@@ -42,7 +42,10 @@ class DownloadJobService:
                 track_id=track.id
             )
 
-            process_download(job.id, track.id)
+            process_download.delay(
+                str(job.id),
+                str(track.id)
+            )
 
             jobs_created += 1
 
