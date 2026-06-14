@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.core.exceptions import NotFoundException, ConflictException
+from app.exceptions.exceptions import NotFoundException, ConflictException
 from app.repositories.playlist_repository import PlaylistRepository
 from app.repositories.playlist_track_repository import PlaylistTrackRepository
 from app.repositories.track_repository import TrackRepository

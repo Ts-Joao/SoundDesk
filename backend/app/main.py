@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.api.exports import router as export_playlist
-from app.core.exceptions import AppException
+from app.exceptions.exceptions import AppException
 from app.api.playlists import router as playlist_router
 from app.api.tracks import router as track_router
 from app.api.playlist_tracks import router as playlist_tracks_router

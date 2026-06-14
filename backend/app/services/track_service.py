@@ -1,7 +1,7 @@
 from pathlib import Path
 from uuid import UUID
 
-from app.core.exceptions import NotFoundException
+from app.exceptions.exceptions import NotFoundException
 from app.enums.track_status import TrackStatus
 from app.repositories.download_job_repository import DownloadJobRepository
 from app.repositories.track_repository import TrackRepository

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.core.exceptions import NotFoundException, BadRequestException
+from app.exceptions.exceptions import NotFoundException, BadRequestException
 from app.enums.download_status import DownloadStatus
 from app.enums.track_status import TrackStatus
 from app.repositories.download_job_repository import DownloadJobRepository

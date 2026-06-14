@@ -1,163 +1,219 @@
-# 🎵 Music Downloader
+# SoundDesk
 
-Sistema para gerenciamento de biblioteca musical pessoal, permitindo organizar playlists, processar downloads, gerar arquivos MP3 e gerenciar músicas de forma centralizada.
+API para gerenciamento de playlists e músicas, com download assíncrono de conteúdo via YouTube, processamento em background com Celery + Redis e exportação de playlists em arquivos ZIP.
 
-## 📖 Sobre o Projeto
+## Tecnologias
 
-O Music Downloader foi criado com o objetivo de facilitar a organização de músicas em playlists e automatizar o processamento de arquivos de áudio.
+- FastAPI
+- PostgreSQL
+- SQLAlchemy
+- Alembic
+- Redis
+- Celery
+- Docker
+- yt-dlp
+- FFmpeg
 
-A aplicação será composta por um backend responsável pelo gerenciamento das playlists, fila de processamento e biblioteca musical, além de um frontend para administração e acompanhamento dos downloads.
+## Funcionalidades
 
-## ✨ Funcionalidades
+### Playlists
+- Criar, listar, buscar, atualizar e remover playlists
+- Adicionar e remover tracks de uma playlist
+- Listar tracks de uma playlist
 
-### Implementadas
+### Tracks
+- Criar, listar, buscar, atualizar e remover tracks
+- Download assíncrono via Celery
+- Extração automática de metadados (título, artista, duração)
+- Download da capa
+- Conversão para MP3 com FFmpeg
 
-* Estrutura inicial do projeto
-* Ambiente Docker
-* PostgreSQL
-* Redis
-* Backend FastAPI
+### Download Jobs
+- Criar e consultar status de jobs
+- Cancelar download em andamento
+- Reprocessar downloads com falha (retry)
+- Histórico de execuções
 
-### Planejadas
+### Exportação de Playlists
+- Exportação assíncrona em ZIP
+- Download do arquivo exportado
+- Cancelamento de exportação
+- Reprocessamento de exportações com falha
 
-* Gerenciamento de playlists
-* Gerenciamento de músicas
-* Fila de processamento
-* Processamento assíncrono com Celery
-* Conversão e gerenciamento de arquivos MP3
-* Gerenciamento de capas
-* Metadados das músicas
-* Biblioteca musical
-* Dashboard com métricas
-* Download em lote
-* Exportação de playlists em ZIP
-* Interface web moderna
+### Gerenciamento de Arquivos
+- Armazenamento local de MP3, capas e ZIPs
+- Remoção automática dos arquivos físicos ao excluir registros relacionados
 
-## 🛠️ Tecnologias
-
-### Backend
-
-* Python 3.13
-* FastAPI
-* SQLAlchemy 2.0
-* Alembic
-* PostgreSQL
-* Redis
-* Celery
-* Docker
-
-### Frontend (Planejado)
-
-* Next.js
-* TypeScript
-* Tailwind CSS
-* shadcn/ui
-* TanStack Query
-
-## 📂 Estrutura do Projeto
+## Arquitetura
 
 ```text
-music-downloader/
-│
-├── backend/
-│   ├── app/
-│   ├── alembic/
-│   ├── requirements.txt
-│   ├── Dockerfile
-│   └── ...
-│
-├── frontend/
-│   └── (futuro)
-│
-├── docker-compose.yml
-├── .env.example
-└── README.md
+Client
+   │
+   ▼
+FastAPI
+   │
+   ├── Services
+   ├── Repositories
+   └── PostgreSQL
+   │
+   ▼
+Redis
+   │
+   ▼
+Celery Workers
+   │
+   ├── Download Processing
+   ├── Metadata Extraction
+   ├── Cover Download
+   └── Playlist Export
 ```
 
-## 🚀 Como Executar
+## Estrutura do Projeto
 
-### Clonar o repositório
-
-```bash
-git clone <url-do-repositorio>
-cd music-downloader
+```text
+backend/
+├── app/
+│   ├── api/
+│   ├── database/
+│   ├── enums/
+│   ├── exceptions/
+│   ├── models/
+│   ├── repositories/
+│   ├── schemas/
+│   ├── services/
+│   ├── workers/
+│   └── main.py
+├── storage/
+│   ├── downloads/
+│   ├── covers/
+│   └── exports/
+├── .env
+└── .env.example
 ```
 
-### Configurar variáveis de ambiente
+## Fluxo de Download
+
+```text
+Track criada
+      │
+      ▼
+Download Job criado (PENDING)
+      │
+      ▼
+PROCESSING
+      │
+      ├── Obtém metadados
+      ├── Faz download do áudio
+      ├── Converte para MP3
+      └── Baixa a capa
+      │
+      ▼
+COMPLETED
+```
+
+**Estados:** `PENDING` → `PROCESSING` → `COMPLETED` | `FAILED` | `CANCELLED`
+
+## Fluxo de Exportação
+
+```text
+Playlist
+    │
+    ▼
+Export Job criado (PENDING)
+    │
+    ▼
+PROCESSING
+    │
+    ▼
+ZIP gerado
+    │
+    ▼
+COMPLETED
+```
+
+**Estados:** `PENDING` → `PROCESSING` → `COMPLETED` | `FAILED` | `CANCELLED`
+
+## Instalação
+
+### Pré-requisitos
+
+- Docker e Docker Compose instalados
+- Git
+
+### Passo a passo
+
+1. Clone o repositório:
 
 ```bash
+git clone https://github.com/Ts-Joao/SoundDesk.git
+cd SoundDesk
+```
+
+2. Acesse o diretório `backend` e crie o arquivo `.env` com base no `.env.example`:
+
+```bash
+cd backend
 cp .env.example .env
 ```
 
-### Subir os serviços
+3. Configure a variável de ambiente no `.env`:
 
-```bash
-docker compose up -d
+```env
+DATABASE_URL=postgresql://postgres:postgres@db:5432/sound
 ```
 
-### Verificar containers
+4. Volte para a raiz do projeto e suba os containers:
 
 ```bash
-docker ps
+cd ..
+docker compose up --build
 ```
 
-## 🗺️ Roadmap
+Esse comando inicia a API, o banco de dados PostgreSQL, o Redis e o worker Celery.
 
-### Fase 1 — Infraestrutura
+5. Em outro terminal, execute as migrations do banco de dados:
 
-* [x] Estrutura inicial do projeto
-* [x] Configuração do Docker
-* [x] PostgreSQL
-* [x] Redis
+```bash
+docker compose exec api alembic upgrade head
+```
 
-### Fase 2 — Banco de Dados
+6. A API estará disponível em:
 
-* [ ] Configuração do SQLAlchemy
-* [ ] Configuração do Alembic
-* [ ] Criação das entidades
+```text
+http://localhost:8000
+```
 
-### Fase 3 — Playlists
+### Parar os containers
 
-* [ ] CRUD de playlists
-* [ ] Organização das músicas por playlist
+```bash
+docker compose down
+```
 
-### Fase 4 — Biblioteca Musical
+### Rodar novamente (sem rebuild)
 
-* [ ] Cadastro de músicas
-* [ ] Biblioteca local
-* [ ] Gerenciamento de arquivos
+```bash
+docker compose up
+```
 
-### Fase 5 — Processamento
+## Documentação
 
-* [ ] Redis
-* [ ] Celery
-* [ ] Workers
-* [ ] Fila de processamento
+Após iniciar a aplicação, acesse:
 
-### Fase 6 — Áudio
+```text
+http://localhost:8000/docs
+```
 
-* [ ] Processamento de arquivos
-* [ ] Gerenciamento de metadados
-* [ ] Capas das músicas
+Swagger UI disponível para testes interativos da API.
 
-### Fase 7 — Frontend
+## Objetivo
 
-* [ ] Dashboard
-* [ ] Gerenciamento de playlists
-* [ ] Biblioteca musical
-* [ ] Monitoramento da fila
+Projeto desenvolvido com foco em estudo e demonstração de:
 
-### Fase 8 — Deploy
-
-* [ ] Deploy da API
-* [ ] Deploy do frontend
-* [ ] Monitoramento
-* [ ] Otimizações
-
-## 📌 Objetivo
-
-O objetivo principal do projeto é servir como uma biblioteca musical pessoal, permitindo organizar playlists, processar músicas de forma automatizada e manter uma coleção local organizada através de uma interface moderna e intuitiva.
-
-## 📄 Licença
-
-Projeto desenvolvido para fins pessoais e educacionais.
+- Arquitetura em camadas (Services / Repositories)
+- Processamento assíncrono com filas
+- Integração com serviços externos (YouTube via yt-dlp)
+- Manipulação de arquivos
+- APIs REST com FastAPI
+- Containerização com Docker
+- Persistência de dados com PostgreSQL
+- Background Jobs com Celery e Redis

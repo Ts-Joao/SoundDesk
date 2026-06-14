@@ -2,7 +2,7 @@ import zipfile
 from pathlib import Path
 from uuid import UUID
 
-from app.core.exceptions import BadRequestException
+from app.exceptions.exceptions import BadRequestException
 from app.enums.export_status import ExportStatus
 from app.enums.track_status import TrackStatus
 from app.models import Playlist
