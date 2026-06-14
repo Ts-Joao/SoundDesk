@@ -43,7 +43,7 @@ class DownloaderService:
                 )
             )
 
-            audio_path = self.download_audio(track.source_url, track.id)
+            audio_path = self.download_audio(track.source_url, track.title)
 
             self.track_service.update(
                 track_id=track.id,
@@ -74,10 +74,10 @@ class DownloaderService:
             "uploader": info.get("uploader"),
         }
 
-    def download_audio(self, source_url: str, track_id: UUID) -> str:
+    def download_audio(self, source_url: str, title: str) -> str:
         self.DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
-        output_template = self.DOWNLOADS_DIR / f"{track_id}.%(ext)s"
+        output_template = self.DOWNLOADS_DIR / f"{title}.%(ext)s"
 
         options: dict[str, Any] = {
             "format": "bestaudio/best",
@@ -94,19 +94,19 @@ class DownloaderService:
         with yt_dlp.YoutubeDL(options) as ydl: # type: ignore[arg-type]
             ydl.download([source_url])
 
-        return f"downloads/{track_id}.mp3"
+        return f"downloads/{title}.mp3"
 
-    def download_cover(self, thumbnail_url: str, track_id: UUID) -> str:
+    def download_cover(self, thumbnail_url: str, title: str) -> str:
         self.COVERS_DIR.mkdir(parents=True, exist_ok=True)
 
-        cover_path = self.COVERS_DIR / f"{track_id}.jpg"
+        cover_path = self.COVERS_DIR / f"{title}.jpg"
         response = requests.get(thumbnail_url, timeout=30)
         response.raise_for_status()
 
         with open(cover_path, "wb") as file:
             file.write(response.content)
 
-        return f"covers/{track_id}.jpg"
+        return f"covers/{title}.jpg"
 
     def check_thumbnail(self, metadata, track: Track):
         try:
@@ -117,7 +117,7 @@ class DownloaderService:
             if thumbnail_url:
                 cover_path = self.download_cover(
                     thumbnail_url,
-                    track.id,
+                    track.title,
                 )
 
                 self.track_service.update(

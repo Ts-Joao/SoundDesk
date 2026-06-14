@@ -69,7 +69,7 @@ class ExportJobService:
             exist_ok=True,
         )
 
-        zip_path = exports_dir / f"{playlist.id}.zip"
+        zip_path = exports_dir / f"{playlist.name}.zip"
 
         with zipfile.ZipFile(zip_path, "w") as zip_file:
             tracks_exported = 0
