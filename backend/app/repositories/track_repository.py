@@ -2,6 +2,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.enums.track_status import TrackStatus
 from app.models.track import Track
 from app.schemas.track import CreateTrackSchema, UpdateTrackSchema, TrackResponseSchema
 
@@ -35,6 +36,17 @@ class TrackRepository():
         for field, value in update_data.items():
             setattr(track, field, value)
 
+        self.db.commit()
+        self.db.refresh(track)
+
+        return track
+
+    def update_status(
+            self,
+            track: Track,
+            status: TrackStatus
+    ):
+        track.status = status
         self.db.commit()
         self.db.refresh(track)
 

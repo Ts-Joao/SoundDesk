@@ -52,4 +52,5 @@ class Track(Base, TimestampMixin):
     downloads = relationship(
         "DownloadJob",
         back_populates="track",
+        cascade="all, delete-orphan",
     )

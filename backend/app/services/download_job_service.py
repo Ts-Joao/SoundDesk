@@ -1,17 +1,17 @@
 from uuid import UUID
 
-from app.core.exceptions import NotFoundException, ConflictException
+from app.core.exceptions import NotFoundException, BadRequestException
 from app.enums.download_status import DownloadStatus
+from app.enums.track_status import TrackStatus
 from app.repositories.download_job_repository import DownloadJobRepository
 from app.repositories.playlist_repository import PlaylistRepository
-from app.workers.tasks import process_download
 
 
 class DownloadJobService:
     def __init__(
             self,
             repository: DownloadJobRepository,
-            playlist_repository: PlaylistRepository
+            playlist_repository: PlaylistRepository,
     ):
         self.repository = repository
         self.playlist_repository = playlist_repository
@@ -20,30 +20,25 @@ class DownloadJobService:
             self,
             playlist_id: UUID,
     ):
-        playlist = self.playlist_repository.find_by_id(playlist_id)
+        from app.workers.tasks import process_download
 
+        playlist = self.playlist_repository.find_by_id(playlist_id)
         jobs_created = 0
 
         for track in playlist.tracks:
-            if track.status == DownloadStatus.COMPLETED:
+            if track.status == TrackStatus.READY:
+                continue
+            if self.repository.find_active_job_by_track(track_id=track.id):
                 continue
 
-            existing_job = (
-                self.repository
-                .find_active_job_by_track(track_id=track.id)
+            job = self.repository.create(track_id=track.id)
+            task = process_download.delay(
+                str(job.id),
+                str(track.id)
             )
-
-            if existing_job:
-                continue
-
-            job = self.repository.create(
-                track_id=track.id
-            )
-
-            process_download.delay(job.id)
+            self.repository.update_celery_task_id(job.track_id, task.id)
 
             jobs_created += 1
-
         return jobs_created
 
     def find_all(
@@ -62,3 +57,48 @@ class DownloadJobService:
             raise NotFoundException("Download job not found")
 
         return job
+
+    def start(self, job_id: UUID):
+        self.repository.find_by_id(job_id)
+
+        self.repository.update_status(job_id, DownloadStatus.PROCESSING)
+
+    def complete(self, job_id: UUID):
+        self.repository.find_by_id(job_id)
+
+        self.repository.update_status(job_id, DownloadStatus.COMPLETED)
+
+    def fail(self, job_id: UUID, error_msg: str):
+        self.repository.find_by_id(job_id)
+
+        self.repository.update_status(job_id, DownloadStatus.FAILED, error_msg)
+
+    def retry(self, job_id: UUID):
+        job = self.repository.find_by_id(job_id)
+
+        if job.status != DownloadStatus.FAILED:
+            raise BadRequestException("Only failed jobs can be retried")
+
+        self.repository.update_status(job_id, DownloadStatus.RETRYING)
+
+        new_job = self.repository.create(track_id=job.track_id)
+
+        from app.workers.tasks import process_download
+        task = process_download.delay(new_job.track_id, new_job.track_id)
+
+        self.repository.update_celery_task_id(new_job.track_id, task.id)
+
+        return new_job
+
+    def cancel(self, job_id: UUID):
+        job = self.repository.find_by_id(job_id)
+
+        if job.status not in (DownloadStatus.PENDING, DownloadStatus.PROCESSING):
+            raise BadRequestException("Only pending or processing jobs can be canceled")
+
+        if job.celery_task_id:
+            from app.workers.celery_app import celery_app
+            celery_app.control.revoke(job.celery_task_id, terminate=True)
+
+        self.repository.update_status(job_id, DownloadStatus.CANCELED)
+        return self.find_by_id(job_id)

@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class DownloadStatus(str, Enum):
+class ExportStatus(str, Enum):
     PENDING = "PENDING"
     PROCESSING = "PROCESSING"
     COMPLETED = "COMPLETED"

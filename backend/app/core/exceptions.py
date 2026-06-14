@@ -12,3 +12,6 @@ class NotFoundException(AppException):
 
 class ConflictException(AppException):
     status_code = 409
+
+class BadRequestException(AppException):
+    status_code = 400
