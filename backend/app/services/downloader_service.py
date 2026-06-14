@@ -78,7 +78,7 @@ class DownloaderService:
     def download_audio(self, source_url: str, title: str) -> str:
         self.DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
-        safe_title = re.sub(r'[<>:"/\\|?*]', "", title)
+        safe_title = self.sanitize_filename(title)
 
         output_template = self.DOWNLOADS_DIR / f"{safe_title}.%(ext)s"
 
@@ -97,19 +97,21 @@ class DownloaderService:
         with yt_dlp.YoutubeDL(options) as ydl: # type: ignore[arg-type]
             ydl.download([source_url])
 
-        return f"downloads/{title}.mp3"
+        return f"downloads/{safe_title}.mp3"
 
     def download_cover(self, thumbnail_url: str, title: str) -> str:
         self.COVERS_DIR.mkdir(parents=True, exist_ok=True)
 
-        cover_path = self.COVERS_DIR / f"{title}.jpg"
+        safe_title = self.sanitize_filename(title)
+
+        cover_path = self.COVERS_DIR / f"{safe_title}.jpg"
         response = requests.get(thumbnail_url, timeout=30)
         response.raise_for_status()
 
         with open(cover_path, "wb") as file:
             file.write(response.content)
 
-        return f"covers/{title}.jpg"
+        return f"covers/{safe_title}.jpg"
 
     def check_thumbnail(self, metadata, track: Track):
         try:
@@ -135,3 +137,11 @@ class DownloaderService:
                 f"Error downloading thumbnail for track {track.id}: {str(exc)} "
                 f"{track.id}: {exc}"
             )
+
+    @staticmethod
+    def sanitize_filename(name: str) -> str:
+        return re.sub(
+            r'[<>:"/\\|?*]',
+            "",
+            name,
+        ).strip()
