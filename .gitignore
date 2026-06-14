@@ -51,3 +51,5 @@ storage/covers/*
 
 storage/downloads/*
 !storage/downloads/.gitkeep
+
+storage/exports/*
