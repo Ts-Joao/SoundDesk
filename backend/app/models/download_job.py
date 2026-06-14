@@ -26,6 +26,11 @@ class DownloadJob(Base, TimestampMixin):
         default=DownloadStatus.PENDING,
     )
 
+    celery_task_id: Mapped[uuid.UUID | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
     error_message: Mapped[str | None] = mapped_column(
         Text,
         nullable=True

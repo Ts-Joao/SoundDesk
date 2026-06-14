@@ -9,6 +9,7 @@ from app.models import Playlist
 from app.models.export_job import ExportJob
 from app.repositories.export_job_repository import ExportJobRepository
 from app.repositories.playlist_repository import PlaylistRepository
+from app.services.file_service import FileService
 from app.workers.tasks import process_export
 
 
@@ -16,10 +17,12 @@ class ExportJobService:
     def __init__(
             self,
             repository: ExportJobRepository,
-            playlist_repository: PlaylistRepository
+            playlist_repository: PlaylistRepository,
+            file_service: FileService,
     ):
         self.repository = repository
         self.playlist_repository = playlist_repository
+        self.file_service = file_service
 
 
     def create(
@@ -144,9 +147,44 @@ class ExportJobService:
     ):
         export_job = self.find_by_id(job_id)
 
-        if export_job.file_path:
-            file_path = Path("storage") / export_job.file_path
-            if file_path.exists():
-                file_path.unlink()
+        self.file_service.delete_zip(export_job.file_path)
+        self.repository.delete(job_id)
 
-        return self.repository.delete(job_id)
+    def retry(
+            self,
+            job_id: UUID,
+    ):
+        job = self.find_by_id(job_id)
+
+        if job.status != ExportStatus.FAILED:
+            raise BadRequestException("Only failed jobs can be retried")
+
+        self.repository.update_status(job_id, ExportStatus.RETRYING)
+
+        new_job = self.repository.create(playlist_id=job.playlist_id)
+
+        from app.workers.tasks import process_export
+        task = process_export.delay(
+            str(new_job.id),
+            str(new_job.playlist_id),
+        )
+
+        self.repository.update_celery_task_id(new_job.id, task.id)
+
+        return new_job
+
+    def cancel(
+            self,
+            job_id: UUID,
+    ):
+        job = self.find_by_id(job_id)
+
+        if job.status not in [ExportStatus.PENDING, ExportStatus.PROCESSING]:
+            raise BadRequestException("Only pending or processing jobs can be canceled")
+
+        if job.celery_task_id:
+            from app.workers.tasks import celery_app
+            celery_app.control.revoke(job.celery_task_id, terminate=True)
+
+        self.repository.update_status(job_id, ExportStatus.CANCELED)
+        return self.find_by_id(job_id)

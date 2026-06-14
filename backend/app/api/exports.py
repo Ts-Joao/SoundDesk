@@ -10,7 +10,7 @@ from app.repositories.export_job_repository import ExportJobRepository
 from app.repositories.playlist_repository import PlaylistRepository
 from app.schemas.export_job import ExportJobResponseSchema
 from app.services.export_job_service import ExportJobService
-
+from app.services.file_service import FileService
 
 router = APIRouter(prefix="/exports", tags=["exports"])
 
@@ -24,9 +24,45 @@ def export_playlist(
 ):
     repository = ExportJobRepository(db)
     playlist_repository = PlaylistRepository(db)
-    service = ExportJobService(repository, playlist_repository)
+    file_service = FileService()
+    service = ExportJobService(
+        repository,
+        playlist_repository,
+        file_service,
+    )
 
     return service.create(playlist_id)
+
+@router.post('/playlists/{job_id}/retry}')
+def retry(
+        job_id: UUID,
+        db: Session = Depends(get_db)
+):
+    repository = ExportJobRepository(db)
+    playlist_repository = PlaylistRepository(db)
+    file_service = FileService()
+    service = ExportJobService(
+        repository,
+        playlist_repository,
+        file_service,
+    )
+
+    return service.retry(job_id)
+
+@router.post('/playlists/{job_id}/cancel')
+def cancel(
+        job_id: UUID,
+        db: Session = Depends(get_db)
+):
+    repository = ExportJobRepository(db)
+    playlist_repository = PlaylistRepository(db)
+    file_service = FileService()
+    service = ExportJobService(
+        repository,
+        playlist_repository,
+        file_service,
+    )
+    return service.cancel(job_id)
 
 @router.get(
     '/',
@@ -35,7 +71,12 @@ def export_playlist(
 def find_all(db: Session = Depends(get_db)):
     repository = ExportJobRepository(db)
     playlist_repository = PlaylistRepository(db)
-    service = ExportJobService(repository, playlist_repository)
+    file_service = FileService()
+    service = ExportJobService(
+        repository,
+        playlist_repository,
+        file_service,
+    )
 
     return service.find_all()
 
@@ -49,7 +90,12 @@ def find_by_id(
 ):
     repository = ExportJobRepository(db)
     playlist_repository = PlaylistRepository(db)
-    service = ExportJobService(repository, playlist_repository)
+    file_service = FileService()
+    service = ExportJobService(
+        repository,
+        playlist_repository,
+        file_service,
+    )
 
     return service.find_by_id(job_id)
 
@@ -62,7 +108,12 @@ def get_zip(
 ):
     repository = ExportJobRepository(db)
     playlist_repository = PlaylistRepository(db)
-    service = ExportJobService(repository, playlist_repository)
+    file_service = FileService()
+    service = ExportJobService(
+        repository,
+        playlist_repository,
+        file_service,
+    )
 
     path = service.get_zip(job_id)
 

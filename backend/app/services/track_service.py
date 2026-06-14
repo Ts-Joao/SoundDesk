@@ -3,13 +3,20 @@ from uuid import UUID
 
 from app.core.exceptions import NotFoundException
 from app.enums.track_status import TrackStatus
+from app.repositories.download_job_repository import DownloadJobRepository
 from app.repositories.track_repository import TrackRepository
 from app.schemas.track import CreateTrackSchema, UpdateTrackSchema
+from app.services.file_service import FileService
 
 
 class TrackService:
-    def __init__(self, repository: TrackRepository):
+    def __init__(
+            self,
+            repository: TrackRepository,
+            file_service: FileService,
+    ):
         self.repository = repository
+        self.file_service = file_service
 
     def create(self, data: CreateTrackSchema):
         return self.repository.create(data)
@@ -37,17 +44,9 @@ class TrackService:
     def delete(self, track_id: UUID):
         track = self.find_by_id(track_id)
 
-        if track.file_path:
-            file_path = Path("storage") / track.file_path
-            if file_path.exists():
-                file_path.unlink()
-
-        if track.cover_path:
-            cover_path = Path("storage") / track.cover_path
-            if cover_path.exists():
-                cover_path.unlink()
-
-        return self.repository.delete(track)
+        self.file_service.delete_audio(track.file_path)
+        self.file_service.delete_cover(track.cover_path)
+        self.repository.delete(track)
 
     def set_processing(self, track_id: UUID):
         track = self.find_by_id(track_id)

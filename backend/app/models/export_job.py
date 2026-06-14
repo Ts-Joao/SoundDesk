@@ -22,6 +22,11 @@ class ExportJob(Base, TimestampMixin):
         default=ExportStatus.PENDING
     )
 
+    celery_task_id: Mapped[UUID | None] = mapped_column(
+        Text,
+        nullable=True
+    )
+
     file_path: Mapped[str | None] = mapped_column(
         Text,
         nullable=True

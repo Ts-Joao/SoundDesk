@@ -35,6 +35,33 @@ def download_playlist(
         "jobs_created": jobs_created,
     }
 
+@router.post("/{job_id}/retry")
+def retry_download(
+        job_id: UUID,
+        db: Session = Depends(get_db)
+):
+    playlist_repository = PlaylistRepository(db)
+    download_repository = DownloadJobRepository(db)
+    service = DownloadJobService(
+        download_repository,
+        playlist_repository,
+    )
+    return service.retry(job_id)
+
+@router.post("/{job_id}/cancel")
+def cancel_download(
+        job_id: UUID,
+        db: Session = Depends(get_db)
+):
+    playlist_repository = PlaylistRepository(db)
+    download_repository = DownloadJobRepository(db)
+    service = DownloadJobService(
+        download_repository,
+        playlist_repository,
+    )
+
+    return service.cancel(job_id)
+
 @router.get(
     "/jobs",
     response_model=list[DownloadJobResponseSchema],

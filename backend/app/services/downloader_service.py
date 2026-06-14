@@ -6,6 +6,8 @@ import re
 import requests
 import yt_dlp
 
+from app.enums.download_status import DownloadStatus
+from app.enums.track_status import TrackStatus
 from app.repositories.track_repository import TrackRepository
 from app.schemas.track import UpdateTrackSchema
 from app.services.download_job_service import DownloadJobService
@@ -59,8 +61,12 @@ class DownloaderService:
             self.download_job_service.complete(job_id)
 
         except Exception as exc:
-            self.track_service.failed(track.id)
-            self.download_job_service.fail(job_id, str(exc))
+            current = self.track_repository.find_by_id(track.id)
+            if current.status != TrackStatus.CANCELED:
+                self.track_service.failed(track.id)
+            job = self.download_job_service.find_by_id(job_id)
+            if job.status != DownloadStatus.CANCELED:
+                self.download_job_service.fail(job_id, str(exc))
             raise
 
     @staticmethod

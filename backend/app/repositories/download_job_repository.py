@@ -83,3 +83,16 @@ class DownloadJobRepository:
         self.db.refresh(job)
 
         return job
+
+    def update_celery_task_id(
+            self,
+            job_id: UUID,
+            task_id: UUID
+    ):
+        job = self.find_by_id(job_id)
+        job.celery_task_id = task_id
+
+        self.db.commit()
+        self.db.refresh(job)
+
+        return job

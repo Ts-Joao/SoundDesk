@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database.dependencies import get_db
 from app.repositories.track_repository import TrackRepository
+from app.services.file_service import FileService
 from app.services.track_service import TrackService
 from app.schemas.track import (
     CreateTrackSchema,
@@ -23,7 +24,8 @@ def create_track(
         db: Session = Depends(get_db)
 ):
     repository = TrackRepository(db)
-    service =TrackService(repository)
+    file_service = FileService()
+    service =TrackService(repository, file_service)
 
     return  service.create(data)
 
@@ -33,7 +35,8 @@ def create_track(
 )
 def find_all(db: Session = Depends(get_db)):
     repository = TrackRepository(db)
-    service = TrackService(repository)
+    file_service = FileService()
+    service =TrackService(repository, file_service)
 
     return service.find_all()
 
@@ -46,7 +49,8 @@ def find_by_id(
         db: Session = Depends(get_db)
 ):
     repository = TrackRepository(db)
-    service = TrackService(repository)
+    file_service = FileService()
+    service =TrackService(repository, file_service)
 
     return service.find_by_id(track_id)
 
@@ -60,7 +64,8 @@ def update(
         db: Session = Depends(get_db)
 ):
     repository = TrackRepository(db)
-    service =TrackService(repository)
+    file_service = FileService()
+    service =TrackService(repository, file_service)
 
     return service.update(track_id, data)
 
@@ -73,6 +78,7 @@ def delete(
         db: Session = Depends(get_db)
 ):
     repository = TrackRepository(db)
-    service = TrackService(repository)
+    file_service = FileService()
+    service =TrackService(repository, file_service)
 
     service.delete(track_id)

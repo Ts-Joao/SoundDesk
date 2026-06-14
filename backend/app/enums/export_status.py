@@ -6,3 +6,5 @@ class ExportStatus(str, Enum):
     PROCESSING = "PROCESSING"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+    RETRYING = "RETRYING"
+    CANCELED = "CANCELED"
