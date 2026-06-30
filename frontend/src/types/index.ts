@@ -38,6 +38,7 @@ export interface Track {
   coverColor: string;
   progress?: number;
   error?: string;
+  cover_path?: string;
 }
 
 export interface QueueJob {

@@ -56,6 +56,7 @@ export function mapApiTrack(raw: ApiTrack, opts: MapTrackOptions = {}): Track {
     downloadedAt: null,
     fileSize:     raw.file_path ? "6.5 MB" : null,
     coverColor,
+    cover_path:   raw.cover_path || undefined,
   };
 }
 

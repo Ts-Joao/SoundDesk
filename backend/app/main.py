@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request, APIRouter
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.staticfiles import StaticFiles
 
 from app.api.exports import router as export_playlist
 from app.exceptions.exceptions import AppException
@@ -15,6 +16,8 @@ app = FastAPI(
     redirect_slashes=False
 )
 api_router = APIRouter(prefix="/api")
+
+app.mount("/storage", StaticFiles(directory="storage"), name="storage")
 
 app.add_middleware(
     CORSMiddleware,

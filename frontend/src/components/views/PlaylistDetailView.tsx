@@ -145,7 +145,11 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
                 <div key={track.id} className="sv-row" style={{ display: "grid", gridTemplateColumns: "40px 1fr 140px 100px 80px 70px 80px", padding: "10px 18px", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.03)", fontSize: 13, transition: "background 0.15s" }}>
                   <div style={{ color: "rgba(255,255,255,0.2)", fontSize: 12 }}>{i + 1}</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                    <CoverArt color={track.coverColor} name={track.name} size={34} />
+                    {track.cover_path !== undefined ? (
+                      <img src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${encodeURIComponent(track.cover_path)}`} alt={track.name} style={{ width: 34, height: 34, borderRadius: 8, objectFit: "cover" }} />
+                    ) : (
+                      <CoverArt color={track.coverColor} name={track.name} size={34} />
+                    )}
                     <div style={{ fontWeight: 600, color: "rgba(255,255,255,0.85)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{track.name}</div>
                   </div>
                   <div style={{ color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{track.artist}</div>

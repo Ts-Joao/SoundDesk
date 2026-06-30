@@ -38,7 +38,6 @@ export function usePlaylist(id: string) {
         mapApiTrack(t, {
           playlistId:   rawPlaylist.id,
           playlistName: rawPlaylist.name,
-          coverColor:   color,
         })
       );
 
