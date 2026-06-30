@@ -1,7 +1,8 @@
-from sqlalchemy import String
+from sqlalchemy import String, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin
+
 
 class Playlist(Base, TimestampMixin):
     __tablename__ = "playlists"
@@ -13,6 +14,12 @@ class Playlist(Base, TimestampMixin):
 
     description: Mapped[str] = mapped_column(
         String(),
+    )
+
+    color: Mapped[str] = mapped_column(
+        String(7),
+        nullable=False,
+        default="6C63FF",
     )
 
     tracks = relationship(
