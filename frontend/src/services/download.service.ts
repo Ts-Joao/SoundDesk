@@ -2,25 +2,25 @@ import { DownloadStatus } from "@/types";
 import { request } from "./api";
 
 export const downloadsService = {
-  list: () => request('/api/downloads'),
+  list: () => request('/downloads'),
 
-  download: (id: string) => request(`/api/downloads/${id}/download`, {
+  download: (id: string) => request(`/downloads/${id}/download`, {
     method: 'POST',
   }),
 
-  retry: (id: string) => request(`/api/downloads/${id}/retry`, {
+  retry: (id: string) => request(`/downloads/${id}/retry`, {
     method: 'POST',
   }),
 
-  cancel: (id: string) => request(`/api/downloads/${id}/cancel`, {
+  cancel: (id: string) => request(`/downloads/${id}/cancel`, {
     method: 'POST',
   }),
 
-  findJobs: (status?: DownloadStatus) => request(`/api/downloads/jobs${status ? `?status=${status}` : ''}`),
+  findJobs: (status?: DownloadStatus) => request(`/downloads/jobs${status ? `?status=${status}` : ''}`),
 
-  getById: (id: string) => request(`/api/downloads/${id}`),
+  getById: (id: string) => request(`/downloads/${id}`),
 
-  remove: (id: string) => request(`/api/downloads/${id}`, {
+  remove: (id: string) => request(`/downloads/${id}`, {
     method: 'DELETE',
   }),
 }

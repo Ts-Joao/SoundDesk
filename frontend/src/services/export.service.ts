@@ -1,21 +1,21 @@
 import { request } from "./api";
 
 export const exportsService = {
-  list: () => request('/api/exports'),
+  list: () => request('/exports'),
 
-  exportPlaylist: (id: string) => request(`/api/exports/playlists/${id}`, {
+  exportPlaylist: (id: string) => request(`/exports/playlists/${id}`, {
     method: 'POST',
   }),
 
-  getById: (id: string) => request(`/api/exports/${id}`),
+  getById: (id: string) => request(`/exports/${id}`),
 
-  retryExport: (id: string) => request(`/api/exports/playlists/${id}/retry`, {
+  retryExport: (id: string) => request(`/exports/playlists/${id}/retry`, {
     method: 'POST',
   }),
 
-  cancelExport: (id: string) => request(`/api/exports/playlists/${id}/cancel`, {
+  cancelExport: (id: string) => request(`/exports/playlists/${id}/cancel`, {
     method: 'POST',
   }),
 
-  getZip: (id: string) => request(`/api/exports/${id}/download`),
+  getZip: (id: string) => request(`/exports/${id}/download`),
 }

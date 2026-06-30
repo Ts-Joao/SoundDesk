@@ -4,7 +4,7 @@ export async function request<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<T> {
-  const response = await fetch(`${API}${endpoint}`, {
+  const response = await fetch(`${API}/api${endpoint}`, {
     headers: {
       "Content-Type": "application/json",
     },

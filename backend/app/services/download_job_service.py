@@ -36,7 +36,7 @@ class DownloadJobService:
                 str(job.id),
                 str(track.id)
             )
-            self.repository.update_celery_task_id(job.track_id, task.id)
+            self.repository.update_celery_task_id(job.id, task.id)
 
             jobs_created += 1
         return jobs_created

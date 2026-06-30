@@ -5,6 +5,7 @@ from app.repositories.download_job_repository import DownloadJobRepository
 from app.repositories.export_job_repository import ExportJobRepository
 from app.repositories.playlist_repository import PlaylistRepository
 from app.repositories.track_repository import TrackRepository
+from app.services.file_service import FileService
 from app.services.track_service import TrackService
 from app.workers.celery_app import celery_app
 from app.services.downloader_service import DownloaderService
@@ -18,12 +19,16 @@ def process_download(job_id: UUID, track_id: UUID):
         track_repository = TrackRepository(db)
         download_job_repository = DownloadJobRepository(db)
         playlist_repository = PlaylistRepository(db)
+        file_service = FileService()
 
         download_job_service = DownloadJobService(
             repository=download_job_repository,
             playlist_repository=playlist_repository,
         )
-        track_service = TrackService(track_repository)
+        track_service = TrackService(
+            track_repository,
+            file_service
+        )
 
         downloader_service = DownloaderService(
             download_job_service=download_job_service,

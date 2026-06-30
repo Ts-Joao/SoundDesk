@@ -13,7 +13,12 @@ ALLOWED_PLAYLIST_COLOR = {
     "#1ABC9C",
 }
 
-class PlaylistColorSchema(BaseModel):
+
+class PlaylistBaseSchema(BaseModel):
+    name: str
+    description: str | None = None
+    color: str = "#6C63FF"
+
     @field_validator("color")
     @classmethod
     def validate_color(cls, v: str) -> str:
@@ -22,18 +27,24 @@ class PlaylistColorSchema(BaseModel):
 
         return v
 
-class PlaylistBaseSchema(PlaylistColorSchema):
-    name: str
-    description: str | None = None
-    color: str = "#6C63FF"
-
 class CreatePlaylistSchema(PlaylistBaseSchema):
     pass
 
-class UpdatePlaylistSchema(PlaylistColorSchema):
+class UpdatePlaylistSchema(BaseModel):
     name: str
     description: str | None = None
     color: str | None = None
+
+    @field_validator("color")
+    @classmethod
+    def validate_color(cls, v: str | None):
+        if v is None:
+            return v
+
+        if v not in ALLOWED_PLAYLIST_COLOR:
+            raise ValueError("Invalid playlist color")
+
+        return v
 
 class PlaylistResponseSchema(PlaylistBaseSchema):
     id: UUID

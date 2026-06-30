@@ -12,8 +12,9 @@ class Playlist(Base, TimestampMixin):
         nullable=False,
     )
 
-    description: Mapped[str] = mapped_column(
+    description: Mapped[str | None] = mapped_column(
         String(),
+        nullable=False,
     )
 
     color: Mapped[str] = mapped_column(

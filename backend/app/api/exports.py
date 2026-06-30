@@ -65,7 +65,7 @@ def cancel(
     return service.cancel(job_id)
 
 @router.get(
-    '/',
+    "",
     response_model=list[ExportJobResponseSchema],
 )
 def find_all(db: Session = Depends(get_db)):

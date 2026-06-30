@@ -16,7 +16,7 @@ from app.schemas.playlist import (
 router = APIRouter(prefix="/playlists", tags=["Playlists"])
 
 @router.post(
-    "/",
+    "",
     response_model=PlaylistResponseSchema,
 )
 def create_playlist(
@@ -29,7 +29,7 @@ def create_playlist(
     return service.create(data)
 
 @router.get(
-    "/",
+    "",
     response_model=list[PlaylistResponseSchema]
 )
 def find_all(db: Session = Depends(get_db)):
