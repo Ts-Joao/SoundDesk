@@ -1,0 +1,16 @@
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Alembic
+alembic/versions/__pycache__/
+
+# Storage
+storage/covers/*
+!storage/covers/.gitkeep
+
+storage/downloads/*
+!storage/downloads/.gitkeep
+
+storage/exports/*

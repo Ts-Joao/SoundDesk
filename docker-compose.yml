@@ -25,18 +25,13 @@ services:
   backend:
     build:
       context: ./backend
-
     container_name: sound_api
-
     ports:
       - "8000:8000"
-
     volumes:
       - ./backend:/app
-
     env_file:
       - .env
-
     depends_on:
       - postgres
       - redis
@@ -49,6 +44,19 @@ services:
       - ./backend:/app
     depends_on:
       - redis
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: sound_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+    env_file:
+      - .env
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

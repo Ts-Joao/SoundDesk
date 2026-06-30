@@ -12,11 +12,6 @@ venv/
 # VSCode
 .vscode/
 
-# Python Cache
-__pycache__/
-*.py[cod]
-*$py.class
-
 # Build / Distribution
 build/
 dist/
@@ -39,17 +34,5 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Alembic
-alembic/versions/__pycache__/
-
 # Docker
 docker-data/
-
-# Storage
-storage/covers/*
-!storage/covers/.gitkeep
-
-storage/downloads/*
-!storage/downloads/.gitkeep
-
-storage/exports/*
