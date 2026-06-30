@@ -8,6 +8,7 @@ export interface ApiPlaylist {
   id: string;
   name: string;
   description?: string | null;
+  color?: string;
 }
 
 /** Retorno de GET /tracks, GET /tracks/:id e GET /playlist-tracks/:id/tracks */
@@ -47,6 +48,7 @@ export interface ApiExportJob {
 export interface CreatePlaylistPayload {
   name: string;
   description?: string;
+  color?: string;
 }
 
 /** Payload para POST /tracks */

@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 import { Trash, Check, Plus, Warning } from "@phosphor-icons/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Modal } from "@/components/modals/Modal";
 import { Button } from "@/components/ui/Button";
 import { CoverArt } from "@/components/ui/index";
 import { PLAYLIST_COLORS, hexToRgba } from "@/lib/utils";
 import { useCreatePlaylist } from "@/hooks/playlists/useCreatePlaylist";
 import { useAddTracks } from "@/hooks/useAddTracks";
+import { playlistsService } from "@/services/playlist.service";
+import { qk } from "@/hooks/queryKeys";
+import type { Playlist } from "@/types";
+import type { CreatePlaylistPayload } from "@/types/api";
 
 // ============================================================
 // ConfirmDialog
@@ -139,7 +144,7 @@ export function CreatePlaylistModal({ onClose, onSuccess, accentColor = "#6C63FF
 
   const handleCreate = async () => {
     if (!name.trim()) return;
-    await createPlaylist.mutateAsync({ name, description: desc || undefined });
+    await createPlaylist.mutateAsync({ name, description: desc || undefined, color: selectedColor });
     setCreated(true);
     onSuccess?.();
     setTimeout(onClose, 900);
@@ -181,6 +186,97 @@ export function CreatePlaylistModal({ onClose, onSuccess, accentColor = "#6C63FF
             icon={created ? <Check size={14} weight="bold" /> : <Plus size={14} weight="bold" />}
           >
             {created ? "Criado!" : createPlaylist.isPending ? "Criando..." : "Criar Playlist"}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ============================================================
+// EditPlaylistModal
+// ============================================================
+interface EditPlaylistModalProps {
+  playlist: Playlist;
+  onClose: () => void;
+  onSuccess?: () => void;
+  accentColor?: string;
+}
+
+export function EditPlaylistModal({ playlist, onClose, onSuccess, accentColor = "#6C63FF" }: EditPlaylistModalProps) {
+  const [name, setName] = useState(playlist.name);
+  const [desc, setDesc] = useState(playlist.description || "");
+  const [updated, setUpdated] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(playlist.color);
+
+  const qc = useQueryClient();
+  const updateMutation = useMutation({
+    mutationFn: (payload: Partial<CreatePlaylistPayload>) =>
+      playlistsService.update(playlist.id, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.playlists() });
+      qc.invalidateQueries({ queryKey: qk.playlist(playlist.id) });
+    },
+  });
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    padding: "9px 12px",
+    background: "rgba(255,255,255,0.04)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: 8,
+    color: "#fff",
+    fontSize: 14,
+    boxSizing: "border-box",
+    outline: "none",
+    fontFamily: "inherit",
+    transition: "border-color 0.15s, box-shadow 0.15s",
+  };
+
+  const handleUpdate = async () => {
+    if (!name.trim()) return;
+    await updateMutation.mutateAsync({ name, description: desc || null, color: selectedColor } as any);
+    setUpdated(true);
+    onSuccess?.();
+    setTimeout(onClose, 900);
+  };
+
+  return (
+    <Modal title="Editar Playlist" onClose={onClose}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>NOME</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Minha playlist..." className="sv-input" style={inputStyle} />
+        </div>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>
+            DESCRIÇÃO <span style={{ opacity: 0.5, fontWeight: 400 }}>(opcional)</span>
+          </label>
+          <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Curta descrição..." className="sv-input" style={inputStyle} />
+        </div>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.06em" }}>COR</label>
+            <CoverArt color={selectedColor} name={name || "Nova"} size={28} />
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {PLAYLIST_COLORS.map((c) => (
+              <button key={c} onClick={() => setSelectedColor(c)} className="sv-color-swatch" style={{ width: 28, height: 28, borderRadius: "50%", background: c, border: selectedColor === c ? "2px solid #fff" : "2px solid transparent", cursor: "pointer", outline: selectedColor === c ? `2px solid ${c}` : "none", outlineOffset: 2, boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 13, transition: "transform 0.15s" }}>
+                {selectedColor === c && <Check size={13} weight="bold" />}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 4 }}>
+          <Button onClick={onClose}>Cancelar</Button>
+          <Button
+            onClick={handleUpdate}
+            disabled={!name.trim() || updated || updateMutation.isPending}
+            variant={updated ? "success" : "primary"}
+            accentColor={selectedColor}
+            icon={updated ? <Check size={14} weight="bold" /> : <Check size={14} weight="bold" />}
+          >
+            {updated ? "Salvo!" : updateMutation.isPending ? "Salvando..." : "Salvar Alterações"}
           </Button>
         </div>
       </div>

@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import { ProgressBar } from "@/components/ui/index";
 import { hexToRgba, formatBytes } from "@/lib/utils";
+import { useQueue } from "@/hooks/useApi";
 
 interface NavItem {
   href: string;
@@ -24,7 +25,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard",  label: "Dashboard",   icon: <SquaresFour  size={17} weight="duotone" /> },
   { href: "/playlists",  label: "Playlists",   icon: <MusicNotes   size={17} weight="duotone" /> },
   { href: "/library",    label: "Biblioteca",  icon: <Books        size={17} weight="duotone" /> },
-  { href: "/queue",      label: "Fila",        icon: <Queue        size={17} weight="duotone" />, badge: 2 },
+  { href: "/queue",      label: "Fila",        icon: <Queue        size={17} weight="duotone" /> },
   { href: "/settings",   label: "Configurações", icon: <Gear       size={17} weight="duotone" /> },
 ];
 
@@ -39,6 +40,9 @@ interface SidebarProps {
 }
 
 export function Sidebar({ pathname, mobileOpen, onClose, accentColor }: SidebarProps) {
+  const { data: queue } = useQueue();
+  const queueCount = queue?.filter((j) => j.status === "pending" || j.status === "processing").length ?? 0;
+
   const isActive = (href: string) =>
     pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
 
@@ -62,6 +66,7 @@ export function Sidebar({ pathname, mobileOpen, onClose, accentColor }: SidebarP
       <nav style={{ padding: "6px 10px", flex: 1, overflowY: "auto" }}>
         {NAV_ITEMS.map((item) => {
           const active = isActive(item.href);
+          const badgeValue = item.href === "/queue" ? queueCount : undefined;
           return (
             <Link
               key={item.href}
@@ -86,9 +91,9 @@ export function Sidebar({ pathname, mobileOpen, onClose, accentColor }: SidebarP
             >
               {item.icon}
               {item.label}
-              {item.badge !== undefined && (
+              {badgeValue !== undefined && badgeValue > 0 && (
                 <span style={{ marginLeft: "auto", padding: "1px 6px", borderRadius: 99, background: "rgba(59,130,246,0.25)", color: "#60a5fa", fontSize: 10, fontWeight: 700 }}>
-                  {item.badge}
+                  {badgeValue}
                 </span>
               )}
             </Link>

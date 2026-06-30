@@ -5,14 +5,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft, Plus, DownloadSimple, ArrowClockwise,
-  Trash, MusicNote,
+  Trash, MusicNote, PencilSimple, Spinner,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import { SearchInput, CoverArt, ProgressBar, EmptyState } from "@/components/ui/index";
 import { Badge } from "@/components/ui/Badge";
-import { AddTrackModal } from "@/components/modals/index";
+import { AddTrackModal, EditPlaylistModal } from "@/components/modals/index";
 import { TableRowSkeleton } from "@/components/skeletons";
-import { usePlaylist, useDeleteTrack } from "@/hooks/useApi";
+import { usePlaylist, useDeleteTrack, useCreateExport } from "@/hooks/useApi";
 import { getPlaylistProgress, formatDuration, formatDate, formatRelative } from "@/lib/utils";
 
 interface PlaylistDetailViewProps {
@@ -24,9 +24,12 @@ const ACCENT = "#6C63FF";
 export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data, isLoading, isError, refetch } = usePlaylist(playlistId);
   const deleteTrack = useDeleteTrack();
+  const createExport = useCreateExport();
 
   if (isError) notFound();
 
@@ -37,6 +40,44 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
   ) ?? [];
 
   const progress = data ? getPlaylistProgress(data) : 0;
+
+  const handleDownloadPlaylist = async () => {
+    if (!data) return;
+    setIsExporting(true);
+    try {
+      const job = await createExport.mutateAsync(data.id) as any;
+      const jobId = job.id;
+
+      const checkStatus = async (): Promise<string> => {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/exports/${jobId}`);
+        const dataStatus = await res.json();
+        if (dataStatus.status === "COMPLETED" || dataStatus.status === "completed" || dataStatus.status === "READY") {
+          return "completed";
+        }
+        if (dataStatus.status === "FAILED" || dataStatus.status === "failed") {
+          return "failed";
+        }
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        return checkStatus();
+      };
+
+      const status = await checkStatus();
+      if (status === "completed") {
+        window.open(`${process.env.NEXT_PUBLIC_API_URL}/api/exports/${jobId}/download`, "_blank");
+      } else {
+        alert("Erro ao exportar a playlist. Tente novamente.");
+      }
+    } catch (err) {
+      console.error("Export failed:", err);
+      alert("Falha ao iniciar a exportação da playlist.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDownloadTrack = (trackId: string) => {
+    window.open(`${process.env.NEXT_PUBLIC_API_URL}/api/tracks/${trackId}/download`, "_blank");
+  };
 
   return (
     <div style={{ padding: 24 }} className="sv-fade-in">
@@ -73,7 +114,8 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
               </div>
             </div>
             <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-              <Button variant="primary" accentColor={data.color} icon={<DownloadSimple size={15} weight="bold" />}>Baixar tudo</Button>
+              <Button variant="primary" accentColor={data.color} icon={isExporting ? <Spinner size={15} className="sv-spin" /> : <DownloadSimple size={15} weight="bold" />} onClick={handleDownloadPlaylist} disabled={isExporting}>{isExporting ? "Exportando..." : "Baixar tudo"}</Button>
+              <Button icon={<PencilSimple size={15} weight="bold" />} onClick={() => setShowEdit(true)}>Editar</Button>
               {data.failedTracks > 0 && <Button icon={<ArrowClockwise size={15} weight="bold" />}>Reprocessar</Button>}
             </div>
           </div>
@@ -112,7 +154,7 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
                   <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 11 }}>{formatRelative(track.addedAt)}</div>
                   <div style={{ display: "flex", gap: 4 }}>
                     {track.status === "completed" && (
-                      <button className="sv-icon-btn" style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", padding: 4, display: "flex" }}>
+                      <button className="sv-icon-btn" onClick={() => handleDownloadTrack(track.id)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", padding: 4, display: "flex" }}>
                         <DownloadSimple size={14} weight="bold" />
                       </button>
                     )}
@@ -132,6 +174,10 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
 
       {showAdd && data && (
         <AddTrackModal playlistName={data.name} playlistId={data.id} onClose={() => setShowAdd(false)} onSuccess={() => refetch()} accentColor={ACCENT} />
+      )}
+
+      {showEdit && data && (
+        <EditPlaylistModal playlist={data as any} onClose={() => setShowEdit(false)} onSuccess={() => refetch()} accentColor={data.color} />
       )}
     </div>
   );

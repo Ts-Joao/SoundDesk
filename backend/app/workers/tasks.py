@@ -50,9 +50,11 @@ def process_export(
     try:
         playlist_repository = PlaylistRepository(db)
         repository = ExportJobRepository(db)
+        file_service = FileService()
         service = ExportJobService(
             playlist_repository=playlist_repository,
-            repository=repository
+            repository=repository,
+            file_service=file_service
         )
 
         service.process_export_playlist(job_id=job_id, playlist_id=playlist_id)

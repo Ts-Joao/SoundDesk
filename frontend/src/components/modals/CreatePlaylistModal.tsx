@@ -28,6 +28,7 @@ export function CreatePlaylistModal({ onClose, onSuccess, accentColor = "#6C63FF
       await createMutation.mutateAsync({
         name: name.trim(),
         description: desc.trim() || undefined,
+        color: selectedColor,
       } as any);
       setCreated(true);
       if (onSuccess) {

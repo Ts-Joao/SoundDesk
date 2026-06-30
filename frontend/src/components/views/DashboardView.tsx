@@ -67,14 +67,21 @@ export function DashboardView() {
         {/* Queue */}
         <div style={{ background: "#1A1B2E", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
           <div style={{ padding: "16px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>Fila de Downloads</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>Fila de Downloads</span>
+              {(queue?.filter((j) => j.status === "pending" || j.status === "processing").length ?? 0) > 0 && (
+                <span style={{ padding: "2px 6px", borderRadius: 99, background: "rgba(59,130,246,0.2)", color: "#60a5fa", fontSize: 10, fontWeight: 700 }}>
+                  {queue?.filter((j) => j.status === "pending" || j.status === "processing").length}
+                </span>
+              )}
+            </div>
             <Link href="/queue" style={{ display: "flex", alignItems: "center", gap: 4, color: "#6C63FF", fontSize: 12, fontWeight: 600, textDecoration: "none" }}>
               Ver fila <ArrowRight size={13} weight="bold" />
             </Link>
           </div>
           {qLoading
             ? Array.from({ length: 5 }).map((_, i) => <ListRowSkeleton key={i} />)
-            : queue?.slice(0, 5).map((job) => (
+            : (queue?.filter((j) => j.status === "pending" || j.status === "processing") ?? []).slice(0, 5).map((job) => (
                 <div key={job.id} className="sv-row" style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 18px", borderBottom: "1px solid rgba(255,255,255,0.04)", transition: "background 0.15s" }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{job.trackName}</div>

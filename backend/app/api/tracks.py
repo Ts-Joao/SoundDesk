@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.database.dependencies import get_db
@@ -82,3 +83,27 @@ def delete(
     service =TrackService(repository, file_service)
 
     service.delete(track_id)
+
+@router.get(
+    "/{track_id}/download",
+)
+def download_track(
+        track_id: UUID,
+        db: Session = Depends(get_db)
+):
+    repository = TrackRepository(db)
+    file_service = FileService()
+    service = TrackService(repository, file_service)
+    track = service.find_by_id(track_id)
+
+    if not track.file_path:
+        from app.exceptions.exceptions import NotFoundException
+        raise NotFoundException("Track file not found or not ready yet")
+
+    path = file_service.BASE_DIR / track.file_path
+
+    return FileResponse(
+        path,
+        filename=Path(path).name,
+        media_type='audio/mpeg',
+    )

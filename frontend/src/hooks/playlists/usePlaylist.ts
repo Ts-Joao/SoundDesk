@@ -27,12 +27,12 @@ export function usePlaylist(id: string) {
 
       const [rawPlaylist, rawTracks] = await Promise.all([
         cachedPlaylist
-          ? Promise.resolve({ id: cachedPlaylist.id, name: cachedPlaylist.name, description: cachedPlaylist.description })
+          ? Promise.resolve({ id: cachedPlaylist.id, name: cachedPlaylist.name, description: cachedPlaylist.description, color: cachedPlaylist.color })
           : playlistsService.getById(id),
         playlistTrackService.getTracks(id),
       ]);
 
-      const color = cachedPlaylist?.color ?? getPlaylistColor(rawPlaylist.id);
+      const color = rawPlaylist.color || cachedPlaylist?.color || getPlaylistColor(rawPlaylist.id);
 
       const tracks = rawTracks.map((t) =>
         mapApiTrack(t, {

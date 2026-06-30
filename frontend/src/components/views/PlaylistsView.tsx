@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, MusicNotes, DownloadSimple, PencilSimple, Trash } from "@phosphor-icons/react";
+import { Plus, MusicNotes, DownloadSimple, PencilSimple, Trash, Spinner } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import { SearchInput, CoverArt, ProgressBar, EmptyState } from "@/components/ui/index";
-import { CreatePlaylistModal, ConfirmDialog } from "@/components/modals/index";
+import { CreatePlaylistModal, ConfirmDialog, EditPlaylistModal } from "@/components/modals/index";
 import { PlaylistCardSkeleton } from "@/components/skeletons";
-import { usePlaylists, useDeletePlaylist } from "@/hooks/useApi";
+import { usePlaylists, useDeletePlaylist, useCreateExport } from "@/hooks/useApi";
 import { getPlaylistProgress, formatRelative, hexToRgba } from "@/lib/utils";
 import type { Playlist } from "@/types";
 
@@ -17,14 +17,50 @@ export function PlaylistsView() {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Playlist | null>(null);
+  const [editTarget, setEditTarget] = useState<Playlist | null>(null);
+  const [exportingId, setExportingId] = useState<string | null>(null);
 
   const { data: playlists, isLoading, refetch } = usePlaylists(search);
   const deleteMutation = useDeletePlaylist();
+  const createExport = useCreateExport();
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     await deleteMutation.mutateAsync(deleteTarget.id);
     setDeleteTarget(null);
+  };
+
+  const handleDownloadPlaylist = async (playlistId: string) => {
+    setExportingId(playlistId);
+    try {
+      const job = await createExport.mutateAsync(playlistId) as any;
+      const jobId = job.id;
+
+      const checkStatus = async (): Promise<string> => {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/exports/${jobId}`);
+        const data = await res.json();
+        if (data.status === "COMPLETED" || data.status === "completed" || data.status === "READY") {
+          return "completed";
+        }
+        if (data.status === "FAILED" || data.status === "failed") {
+          return "failed";
+        }
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        return checkStatus();
+      };
+
+      const status = await checkStatus();
+      if (status === "completed") {
+        window.open(`${process.env.NEXT_PUBLIC_API_URL}/api/exports/${jobId}/download`, "_blank");
+      } else {
+        alert("Erro ao exportar a playlist. Tente novamente.");
+      }
+    } catch (err) {
+      console.error("Export failed:", err);
+      alert("Falha ao iniciar a exportação da playlist.");
+    } finally {
+      setExportingId(null);
+    }
   };
 
   return (
@@ -83,8 +119,8 @@ export function PlaylistsView() {
                   )}
 
                   <div style={{ display: "flex", gap: 6 }}>
-                    <Button size="sm" variant="primary" accentColor={pl.color} icon={<DownloadSimple size={13} weight="bold" />}>Download</Button>
-                    <Button size="sm" icon={<PencilSimple size={13} weight="bold" />}>Editar</Button>
+                    <Button size="sm" variant="primary" accentColor={pl.color} icon={exportingId === pl.id ? <Spinner size={13} className="sv-spin" /> : <DownloadSimple size={13} weight="bold" />} onClick={() => handleDownloadPlaylist(pl.id)} disabled={exportingId !== null}>{exportingId === pl.id ? "Exportando..." : "Download"}</Button>
+                    <Button size="sm" icon={<PencilSimple size={13} weight="bold" />} onClick={() => setEditTarget(pl)}>Editar</Button>
                     <Button size="sm" variant="danger" icon={<Trash size={13} weight="bold" />} onClick={() => setDeleteTarget(pl)}>Excluir</Button>
                   </div>
                 </div>
@@ -95,6 +131,14 @@ export function PlaylistsView() {
       )}
 
       {showCreate && <CreatePlaylistModal onClose={() => setShowCreate(false)} onSuccess={() => refetch()} accentColor={ACCENT} />}
+      {editTarget && (
+        <EditPlaylistModal
+          playlist={editTarget}
+          onClose={() => setEditTarget(null)}
+          onSuccess={() => refetch()}
+          accentColor={editTarget.color}
+        />
+      )}
       {deleteTarget && (
         <ConfirmDialog
           title="Excluir Playlist"
