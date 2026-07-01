@@ -4,8 +4,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "SoundVault",
-    template: "%s — SoundVault",
+    default: "SoundDesk",
+    template: "%s — SoundDesk",
   },
   description: "Gerencie sua biblioteca musical pessoal com playlists, downloads e fila de processamento.",
   keywords: ["music", "library", "playlist", "download", "mp3"],

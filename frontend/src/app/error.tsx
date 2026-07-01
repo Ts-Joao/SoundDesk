@@ -10,7 +10,7 @@ interface ErrorProps {
 
 export default function GlobalError({ error, reset }: ErrorProps) {
   useEffect(() => {
-    console.error("[SoundVault Error]", error);
+    console.error("[SoundDesk Error]", error);
   }, [error]);
 
   return (

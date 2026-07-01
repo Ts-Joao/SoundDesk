@@ -1,5 +1,5 @@
 // ============================================================
-// TYPES — SoundVault
+// TYPES — SoundDesk
 // ============================================================
 
 export type TrackStatus = "pending" | "processing" | "completed" | "failed";

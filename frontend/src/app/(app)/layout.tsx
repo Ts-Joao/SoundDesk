@@ -22,7 +22,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const meta = PAGE_META[pathname] ??
     (pathname.startsWith("/playlists/")
       ? { title: "Detalhes da Playlist", subtitle: "Músicas e progresso" }
-      : { title: "SoundVault", subtitle: "" });
+      : { title: "SoundDesk", subtitle: "" });
 
   return (
     <div

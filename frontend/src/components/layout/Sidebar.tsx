@@ -54,7 +54,7 @@ export function Sidebar({ pathname, mobileOpen, onClose, accentColor }: SidebarP
           <MusicNotes size={18} weight="fill" />
         </div>
         <div>
-          <div style={{ fontSize: 14, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>SoundVault</div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>SoundDesk</div>
           <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", letterSpacing: "0.06em" }}>MUSIC LIBRARY</div>
         </div>
         <button onClick={onClose} className="sv-icon-btn" style={{ marginLeft: "auto", background: "none", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", display: "flex", padding: 4 }}>
