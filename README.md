@@ -1,163 +1,112 @@
-# 🎵 Music Downloader
+# SoundDesk
 
-Sistema para gerenciamento de biblioteca musical pessoal, permitindo organizar playlists, processar downloads, gerar arquivos MP3 e gerenciar músicas de forma centralizada.
+SoundDesk é uma plataforma para gerenciamento de bibliotecas musicais, permitindo organizar playlists, baixar músicas a partir do YouTube, acompanhar o processamento em tempo real e exportar playlists em arquivos ZIP.
 
-## 📖 Sobre o Projeto
+O projeto é dividido em duas aplicações independentes:
 
-O Music Downloader foi criado com o objetivo de facilitar a organização de músicas em playlists e automatizar o processamento de arquivos de áudio.
+* **Backend:** API REST desenvolvida com FastAPI.
+* **Frontend:** Interface web desenvolvida com Next.js.
 
-A aplicação será composta por um backend responsável pelo gerenciamento das playlists, fila de processamento e biblioteca musical, além de um frontend para administração e acompanhamento dos downloads.
+---
 
-## ✨ Funcionalidades
-
-### Implementadas
-
-* Estrutura inicial do projeto
-* Ambiente Docker
-* PostgreSQL
-* Redis
-* Backend FastAPI
-
-### Planejadas
-
-* Gerenciamento de playlists
-* Gerenciamento de músicas
-* Fila de processamento
-* Processamento assíncrono com Celery
-* Conversão e gerenciamento de arquivos MP3
-* Gerenciamento de capas
-* Metadados das músicas
-* Biblioteca musical
-* Dashboard com métricas
-* Download em lote
-* Exportação de playlists em ZIP
-* Interface web moderna
-
-## 🛠️ Tecnologias
-
-### Backend
-
-* Python 3.13
-* FastAPI
-* SQLAlchemy 2.0
-* Alembic
-* PostgreSQL
-* Redis
-* Celery
-* Docker
-
-### Frontend (Planejado)
-
-* Next.js
-* TypeScript
-* Tailwind CSS
-* shadcn/ui
-* TanStack Query
-
-## 📂 Estrutura do Projeto
+## Arquitetura
 
 ```text
-music-downloader/
-│
+Frontend (Next.js)
+        │
+        ▼
+ Backend (FastAPI)
+        │
+ ┌──────┴──────┐
+ ▼             ▼
+PostgreSQL   Redis
+                │
+                ▼
+             Celery
+                │
+                ▼
+      yt-dlp + FFmpeg
+```
+
+---
+
+## Estrutura do Projeto
+
+```text
+SoundDesk/
 ├── backend/
-│   ├── app/
-│   ├── alembic/
-│   ├── requirements.txt
-│   ├── Dockerfile
-│   └── ...
-│
 ├── frontend/
-│   └── (futuro)
-│
-├── docker-compose.yml
-├── .env.example
 └── README.md
 ```
 
-## 🚀 Como Executar
+---
 
-### Clonar o repositório
+## Tecnologias
+
+### Backend
+
+* FastAPI
+* SQLAlchemy
+* PostgreSQL
+* Alembic
+* Celery
+* Redis
+* yt-dlp
+* FFmpeg
+* Docker
+
+### Frontend
+
+* Next.js 15
+* React
+* TypeScript
+* Tailwind CSS
+* TanStack Query
+
+---
+
+## Funcionalidades
+
+* Gerenciamento de playlists
+* Gerenciamento de músicas
+* Download assíncrono de músicas
+* Download automático de capas
+* Conversão para MP3
+* Exportação de playlists em ZIP
+* Cancelamento de tarefas
+* Retry de tarefas com falha
+* Dashboard com estatísticas
+* Interface responsiva
+* Sistema de cores para playlists
+
+---
+
+## Executando o Projeto
+
+### Backend
 
 ```bash
-git clone <url-do-repositorio>
-cd music-downloader
+cd backend
+docker compose up --build
 ```
 
-### Configurar variáveis de ambiente
+### Frontend
 
 ```bash
-cp .env.example .env
+cd frontend
+npm install
+npm run dev
 ```
 
-### Subir os serviços
+---
 
-```bash
-docker compose up -d
-```
+## Documentação
 
-### Verificar containers
+* Backend: `backend/README.md`
+* Frontend: `frontend/README.md`
 
-```bash
-docker ps
-```
+---
 
-## 🗺️ Roadmap
+## Objetivo
 
-### Fase 1 — Infraestrutura
-
-* [x] Estrutura inicial do projeto
-* [x] Configuração do Docker
-* [x] PostgreSQL
-* [x] Redis
-
-### Fase 2 — Banco de Dados
-
-* [ ] Configuração do SQLAlchemy
-* [ ] Configuração do Alembic
-* [ ] Criação das entidades
-
-### Fase 3 — Playlists
-
-* [ ] CRUD de playlists
-* [ ] Organização das músicas por playlist
-
-### Fase 4 — Biblioteca Musical
-
-* [ ] Cadastro de músicas
-* [ ] Biblioteca local
-* [ ] Gerenciamento de arquivos
-
-### Fase 5 — Processamento
-
-* [ ] Redis
-* [ ] Celery
-* [ ] Workers
-* [ ] Fila de processamento
-
-### Fase 6 — Áudio
-
-* [ ] Processamento de arquivos
-* [ ] Gerenciamento de metadados
-* [ ] Capas das músicas
-
-### Fase 7 — Frontend
-
-* [ ] Dashboard
-* [ ] Gerenciamento de playlists
-* [ ] Biblioteca musical
-* [ ] Monitoramento da fila
-
-### Fase 8 — Deploy
-
-* [ ] Deploy da API
-* [ ] Deploy do frontend
-* [ ] Monitoramento
-* [ ] Otimizações
-
-## 📌 Objetivo
-
-O objetivo principal do projeto é servir como uma biblioteca musical pessoal, permitindo organizar playlists, processar músicas de forma automatizada e manter uma coleção local organizada através de uma interface moderna e intuitiva.
-
-## 📄 Licença
-
-Projeto desenvolvido para fins pessoais e educacionais.
+Este projeto foi desenvolvido para estudo e prática de desenvolvimento Full Stack, explorando arquitetura em camadas, processamento assíncrono, manipulação de arquivos, integração com serviços externos e construção de interfaces modernas.
