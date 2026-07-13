@@ -1,4 +1,4 @@
-from enum import Enum
+from export_status import Enum
 
 
 class ExportStatus(str, Enum):

@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.enums.export_status import ExportStatus
-from app.models.export_job import ExportJob
+from app.exports.model import ExportJob
 
 
 class ExportJobRepository:

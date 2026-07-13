@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database.dependencies import get_db
-from app.repositories.playlist_repository import PlaylistRepository
-from app.services.playlist_service import PlaylistService
-from app.schemas.playlist import (
+from app.playlists.repository import PlaylistRepository
+from app.playlists.service import PlaylistService
+from app.playlists.schemas import (
     CreatePlaylistSchema,
     UpdatePlaylistSchema,
     PlaylistResponseSchema,

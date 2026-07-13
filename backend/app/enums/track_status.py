@@ -1,4 +1,4 @@
-from enum import Enum
+from track_status import Enum
 
 
 class TrackStatus(str, Enum):

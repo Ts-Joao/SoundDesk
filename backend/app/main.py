@@ -3,12 +3,12 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 
-from app.api.exports import router as export_playlist
+from app.exports.router import router as export_playlist
 from app.exceptions.exceptions import AppException
-from app.api.playlists import router as playlist_router
-from app.api.tracks import router as track_router
-from app.api.playlist_tracks import router as playlist_tracks_router
-from app.api.downloads import router as downloads_router
+from app.playlists.router import router as playlist_router
+from app.tracks.router import router as track_router
+from app.playlists.track_router import router as playlist_tracks_router
+from app.downloads.router import router as downloads_router
 
 
 app = FastAPI(
@@ -24,6 +24,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://192.168.18.97:3000"
     ],
     allow_credentials=True,
     allow_methods=["*"],

@@ -1,12 +1,10 @@
-from pathlib import Path
 from uuid import UUID
 
 from app.exceptions.exceptions import NotFoundException
 from app.enums.track_status import TrackStatus
-from app.repositories.download_job_repository import DownloadJobRepository
-from app.repositories.track_repository import TrackRepository
-from app.schemas.track import CreateTrackSchema, UpdateTrackSchema
-from app.services.file_service import FileService
+from app.tracks.repository import TrackRepository
+from app.tracks.schemas import CreateTrackSchema, UpdateTrackSchema
+from app.common.file_service import FileService
 
 
 class TrackService:

@@ -4,12 +4,12 @@ from fastapi import Depends, APIRouter
 from sqlalchemy.orm import Session
 
 from app.database.dependencies import get_db
-from app.repositories.playlist_repository import PlaylistRepository
-from app.repositories.playlist_track_repository import PlaylistTrackRepository
-from app.repositories.track_repository import TrackRepository
-from app.schemas.playlist import PlaylistResponseSchema
-from app.schemas.track import TrackResponseSchema
-from app.services.playlist_track_service import PlaylistTrackService
+from app.playlists.repository import PlaylistRepository
+from app.playlists.track_repository import PlaylistTrackRepository
+from app.tracks.repository import TrackRepository
+from app.playlists.schemas import PlaylistResponseSchema
+from app.tracks.schemas import TrackResponseSchema
+from app.playlists.track_service import PlaylistTrackService
 
 
 router = APIRouter(prefix="/playlist-tracks", tags=["Playlist Tracks"])

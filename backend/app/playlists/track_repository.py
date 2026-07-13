@@ -2,7 +2,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.models.playlist_track import PlaylistTrack
+from app.playlists.model import PlaylistTrack
 
 
 class PlaylistTrackRepository:

@@ -1,9 +1,9 @@
 from uuid import UUID
 
 from app.exceptions.exceptions import NotFoundException, ConflictException
-from app.repositories.playlist_repository import PlaylistRepository
-from app.repositories.playlist_track_repository import PlaylistTrackRepository
-from app.repositories.track_repository import TrackRepository
+from app.playlists.repository import PlaylistRepository
+from app.playlists.track_repository import PlaylistTrackRepository
+from app.tracks.repository import TrackRepository
 
 
 class PlaylistTrackService:

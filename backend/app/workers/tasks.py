@@ -1,15 +1,15 @@
 from uuid import UUID
 
 from app.database.session import SessionLocal
-from app.repositories.download_job_repository import DownloadJobRepository
-from app.repositories.export_job_repository import ExportJobRepository
-from app.repositories.playlist_repository import PlaylistRepository
-from app.repositories.track_repository import TrackRepository
-from app.services.file_service import FileService
-from app.services.track_service import TrackService
-from app.workers.celery_app import celery_app
-from app.services.downloader_service import DownloaderService
-from app.services.download_job_service import DownloadJobService
+from app.downloads.repository import DownloadJobRepository
+from app.exports.repository import ExportJobRepository
+from app.playlists.repository import PlaylistRepository
+from app.tracks.repository import TrackRepository
+from app.common.file_service import FileService
+from app.tracks.service import TrackService
+from app.workers.celery import celery_app
+from app.downloads.processor import DownloaderService
+from app.downloads.service import DownloadJobService
 
 
 @celery_app.task(name="process_download")
@@ -45,7 +45,7 @@ def process_export(
         job_id: UUID,
         playlist_id: UUID
 ):
-    from app.services.export_job_service import ExportJobService
+    from app.exports.service import ExportJobService
     db = SessionLocal()
     try:
         playlist_repository = PlaylistRepository(db)

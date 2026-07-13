@@ -5,10 +5,10 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.database.dependencies import get_db
-from app.repositories.track_repository import TrackRepository
-from app.services.file_service import FileService
-from app.services.track_service import TrackService
-from app.schemas.track import (
+from app.tracks.repository import TrackRepository
+from app.common.file_service import FileService
+from app.tracks.service import TrackService
+from app.tracks.schemas import (
     CreateTrackSchema,
     UpdateTrackSchema,
     TrackResponseSchema

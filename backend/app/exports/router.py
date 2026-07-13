@@ -6,11 +6,11 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.database.dependencies import get_db
-from app.repositories.export_job_repository import ExportJobRepository
-from app.repositories.playlist_repository import PlaylistRepository
-from app.schemas.export_job import ExportJobResponseSchema
-from app.services.export_job_service import ExportJobService
-from app.services.file_service import FileService
+from app.exports.repository import ExportJobRepository
+from app.playlists.repository import PlaylistRepository
+from app.exports.schemas import ExportJobResponseSchema
+from app.exports.service import ExportJobService
+from app.common.file_service import FileService
 
 router = APIRouter(prefix="/exports", tags=["exports"])
 

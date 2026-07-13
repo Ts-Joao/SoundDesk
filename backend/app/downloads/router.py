@@ -5,10 +5,10 @@ from sqlalchemy.orm import Session
 
 from app.database.dependencies import get_db
 from app.enums.download_status import DownloadStatus
-from app.repositories.download_job_repository import DownloadJobRepository
-from app.repositories.playlist_repository import PlaylistRepository
-from app.services.download_job_service import DownloadJobService
-from app.schemas.download_job import DownloadJobResponseSchema
+from app.downloads.repository import DownloadJobRepository
+from app.playlists.repository import PlaylistRepository
+from app.downloads.service import DownloadJobService
+from app.downloads.schemas import DownloadJobResponseSchema
 
 
 router = APIRouter(prefix="/downloads", tags=["Downloads"])

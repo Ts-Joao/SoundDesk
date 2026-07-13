@@ -1,8 +1,8 @@
 from uuid import UUID
 
 from app.exceptions.exceptions import NotFoundException
-from app.repositories.playlist_repository import PlaylistRepository
-from app.schemas.playlist import CreatePlaylistSchema, UpdatePlaylistSchema
+from app.playlists.repository import PlaylistRepository
+from app.playlists.schemas import CreatePlaylistSchema, UpdatePlaylistSchema
 
 
 class PlaylistService:

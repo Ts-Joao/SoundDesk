@@ -1,4 +1,4 @@
-from enum import Enum
+from app.enums.track_status import Enum
 
 
 class DownloadStatus(str, Enum):

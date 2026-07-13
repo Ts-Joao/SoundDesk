@@ -4,7 +4,10 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from app.database.base import Base
-from app.models import *
+from app.playlists.model import Playlist, PlaylistTrack
+from app.tracks.model import Track
+from app.downloads.model import DownloadJob
+from app.exports.model import ExportJob
 
 from app.database.config import DATABASE_URL
 

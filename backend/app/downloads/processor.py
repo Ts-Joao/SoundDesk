@@ -8,11 +8,11 @@ import yt_dlp
 
 from app.enums.download_status import DownloadStatus
 from app.enums.track_status import TrackStatus
-from app.repositories.track_repository import TrackRepository
-from app.schemas.track import UpdateTrackSchema
-from app.services.download_job_service import DownloadJobService
-from app.services.track_service import TrackService
-from app.models.track import Track
+from app.tracks.repository import TrackRepository
+from app.tracks.schemas import UpdateTrackSchema
+from app.downloads.service import DownloadJobService
+from app.tracks.service import TrackService
+from app.tracks.model import Track
 
 
 class DownloaderService:

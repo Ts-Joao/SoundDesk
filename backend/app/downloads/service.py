@@ -3,8 +3,8 @@ from uuid import UUID
 from app.exceptions.exceptions import NotFoundException, BadRequestException
 from app.enums.download_status import DownloadStatus
 from app.enums.track_status import TrackStatus
-from app.repositories.download_job_repository import DownloadJobRepository
-from app.repositories.playlist_repository import PlaylistRepository
+from app.downloads.repository import DownloadJobRepository
+from app.playlists.repository import PlaylistRepository
 
 
 class DownloadJobService:
@@ -84,9 +84,9 @@ class DownloadJobService:
         new_job = self.repository.create(track_id=job.track_id)
 
         from app.workers.tasks import process_download
-        task = process_download.delay(new_job.track_id, new_job.track_id)
+        task = process_download.delay(str(new_job.id), str(new_job.track_id))
 
-        self.repository.update_celery_task_id(new_job.track_id, task.id)
+        self.repository.update_celery_task_id(new_job.id, task.id)
 
         return new_job
 
@@ -97,7 +97,7 @@ class DownloadJobService:
             raise BadRequestException("Only pending or processing jobs can be canceled")
 
         if job.celery_task_id:
-            from app.workers.celery_app import celery_app
+            from app.workers.celery import celery_app
             celery_app.control.revoke(job.celery_task_id, terminate=True)
 
         self.repository.update_status(job_id, DownloadStatus.CANCELED)
