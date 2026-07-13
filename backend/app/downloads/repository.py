@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from app.downloads.model import DownloadJob
+from app.downloads.models import DownloadJob
 from app.enums.download_status import DownloadStatus
 
 

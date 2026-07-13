@@ -2,7 +2,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.playlists.model import Playlist
+from app.playlists.models import Playlist
 from app.playlists.schemas import CreatePlaylistSchema, UpdatePlaylistSchema
 
 

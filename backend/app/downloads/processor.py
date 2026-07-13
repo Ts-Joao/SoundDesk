@@ -12,7 +12,7 @@ from app.tracks.repository import TrackRepository
 from app.tracks.schemas import UpdateTrackSchema
 from app.downloads.service import DownloadJobService
 from app.tracks.service import TrackService
-from app.tracks.model import Track
+from app.tracks.models import Track
 
 
 class DownloaderService:

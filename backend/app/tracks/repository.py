@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.enums.track_status import TrackStatus
-from app.tracks.model import Track
+from app.tracks.models import Track
 from app.tracks.schemas import CreateTrackSchema, UpdateTrackSchema
 
 

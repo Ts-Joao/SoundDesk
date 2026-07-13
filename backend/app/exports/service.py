@@ -5,8 +5,8 @@ from uuid import UUID
 from app.exceptions.exceptions import BadRequestException
 from app.enums.export_status import ExportStatus
 from app.enums.track_status import TrackStatus
-from app.playlists.model import Playlist
-from app.exports.model import ExportJob
+from app.playlists.models import Playlist
+from app.exports.models import ExportJob
 from app.exports.repository import ExportJobRepository
 from app.playlists.repository import PlaylistRepository
 from app.common.file_service import FileService
