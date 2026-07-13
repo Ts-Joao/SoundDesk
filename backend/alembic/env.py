@@ -8,6 +8,7 @@ from app.playlists.models import Playlist, PlaylistTrack
 from app.tracks.models import Track
 from app.downloads.models import DownloadJob
 from app.exports.models import ExportJob
+from app.users.models import User
 
 from app.database.config import DATABASE_URL
 

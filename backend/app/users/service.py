@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from app.auth.password import hash_password, verify_password
 from app.exceptions.exceptions import NotFoundException, BadRequestException
 from app.users.repository import UserRepository
 from app.users.schemas import CreateUserSchema, UpdateUserSchema, ChangePasswordSchema
@@ -13,7 +14,10 @@ class UserService:
         self.repository = repository
 
     def create(self, data: CreateUserSchema):
-        user = self.repository.create(data)
+        user_data = data.model_dump()
+        password_limpa = user_data.pop("password", None) or user_data.get("password_hash")
+        user_data["password_hash"] = hash_password(password_limpa)
+        user = self.repository.create(user_data)
         return user
 
     def find_all(self):
@@ -53,9 +57,10 @@ class UserService:
 
     def change_password(self, user_id: UUID, data: ChangePasswordSchema):
         user = self.find_by_id(user_id)
+        passwordMatch = verify_password(data.current_password, user.password_hash)
 
-        if  user.password != data.current_password:
-            raise BadRequestException("Password mismatch")
+        if not passwordMatch:
+            raise BadRequestException("Password not match")
 
         user.password = data.new_password
         self.repository.reset_password(user, password=data.new_password)
@@ -70,3 +75,7 @@ class UserService:
         user = self.find_by_id(user_id)
         self.repository.activate(user)
         return user
+
+    def delete_user(self, user_id: UUID):
+        user = self.find_by_id(user_id)
+        return self.repository.delete(user)

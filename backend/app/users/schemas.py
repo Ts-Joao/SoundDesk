@@ -1,4 +1,3 @@
-from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -11,19 +10,16 @@ class UserBaseSchema(BaseModel):
         min_length=3,
         max_length=50,
     )
-
     display_name: str = Field(
         min_length=2,
         max_length=100,
     )
-
     email: EmailStr
-
     avatar: str | None = None
 
 
 class CreateUserSchema(UserBaseSchema):
-    password: str = Field(
+    password_hash: str = Field(
         min_length=8,
         max_length=128,
     )
@@ -35,15 +31,12 @@ class UpdateUserSchema(BaseModel):
         min_length=3,
         max_length=50,
     )
-
     display_name: str | None = Field(
         default=None,
         min_length=2,
         max_length=100,
     )
-
     email: EmailStr | None = None
-
     avatar: str | None = None
 
 
@@ -57,17 +50,9 @@ class ChangePasswordSchema(BaseModel):
 
 class UserResponseSchema(UserBaseSchema):
     id: UUID
-
     role: UserRoles
-
     email_verified: bool
-
     is_active: bool
-
-    created_at: datetime
-
-    updated_at: datetime
-
     model_config = ConfigDict(
         from_attributes=True,
     )

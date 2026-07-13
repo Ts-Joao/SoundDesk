@@ -9,8 +9,8 @@ class UserRepository():
     def __init__(self, db: Session):
         self.db = db
 
-    def create(self, data: CreateUserSchema) -> User:
-        user = User(**data.model_dump())
+    def create(self, data: dict) -> User:
+        user = User(**data)
 
         self.db.add(user)
         self.db.commit()

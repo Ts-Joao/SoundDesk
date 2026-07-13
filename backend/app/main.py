@@ -9,6 +9,7 @@ from app.playlists.router import router as playlist_router
 from app.tracks.router import router as track_router
 from app.playlists.track_router import router as playlist_tracks_router
 from app.downloads.router import router as downloads_router
+from app.users.router import router as user_router
 
 
 app = FastAPI(
@@ -43,6 +44,7 @@ async def app_exception_handler(
         },
     )
 
+app.include_router(user_router)
 api_router.include_router(playlist_router)
 api_router.include_router(track_router)
 api_router.include_router(playlist_tracks_router)
