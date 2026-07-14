@@ -17,7 +17,8 @@ class RefreshToken(Base, TimestampMixin):
 
     token_hash: Mapped[str] = mapped_column(
         Text,
-        nullable=False
+        nullable=False,
+        unique=True
     )
 
     expires_at: Mapped[datetime] = mapped_column(
