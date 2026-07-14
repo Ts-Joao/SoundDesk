@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -37,8 +37,14 @@ class RefreshTokenRepository:
         token.revoked_at = datetime.now()
         self.db.commit()
 
-    def revoke_all(self) -> None:
-        self.db.query(RefreshToken).delete()
+    def revoke_all(self, user_id: UUID) -> None:
+        self.db.query(RefreshToken).filter(
+            RefreshToken.user_id == user_id,
+            RefreshToken.revoked_at == None
+        ).update(
+            {RefreshToken.revoked_at: datetime.now(UTC)},
+            synchronize_session=False
+        )
         self.db.commit()
 
     def delete_expired(self) -> None:
