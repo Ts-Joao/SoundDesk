@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 
 from app.auth.jwt_handler import JWTService
@@ -28,7 +30,6 @@ class AuthService:
         if not user.is_active:
             raise ForbiddenException("Account disabled")
 
-
         tokens = self._generate_tokens(user)
 
         return {
@@ -38,13 +39,19 @@ class AuthService:
         }
 
     def refresh(self, token: str):
-        payload = JWTService.decode_token(token)
+        self._is_refresh_token_valid(token)
 
-        if payload["type"] != "refresh":
-            raise ForbiddenException("Access denied")
+        db_refresh_token = self._find_by_hash(token)
 
-        user = self.user_repository.find_by_id(payload["sub"])
-        tokens = self._generate_tokens(user)
+        if db_refresh_token.revoked_at:
+            raise UnauthorizedException("Access denied")
+
+        if db_refresh_token.expires_at < datetime.now():
+            raise UnauthorizedException("Access denied")
+
+        self.repository.revoke(db_refresh_token)
+
+        tokens = self._generate_tokens(db_refresh_token.user)
 
         return {
             "access_token": tokens["access_token"],
@@ -56,23 +63,18 @@ class AuthService:
             self,
             refresh_token: str,
     ):
-        payload = JWTService.decode_token(refresh_token)
-
-        if payload["type"] != "refresh":
-            raise UnauthorizedException("Access denied")
+        self._is_refresh_token_valid(refresh_token)
 
         token_hash = hash_refresh_token(refresh_token)
 
-        token = self.repository.find_by_hash(token_hash)
-
-        if not token:
-            raise UnauthorizedException("Invalid credentials")
+        token = self._find_by_hash(token_hash)
 
         self.repository.revoke(token)
 
     def _generate_tokens(self, user: User):
         access_token = JWTService.create_access_token(user.id, user.role)
         token, expires_at = JWTService.create_refresh_token(user.id, user.role)
+
         self.repository.create(
             user.id,
             hash_refresh_token(token),
@@ -84,3 +86,21 @@ class AuthService:
             "refresh_token": token,
             "token_type": "bearer"
         }
+
+    def _find_by_hash(self, token: str):
+        token_hash = hash_refresh_token(token)
+        refresh_token = self.repository.find_by_hash(token_hash)
+
+        if not refresh_token:
+            raise UnauthorizedException("Invalid credentials")
+
+        return refresh_token
+
+    @staticmethod
+    def _is_refresh_token_valid(token: str):
+        payload = JWTService.decode_token(token)
+
+        if payload["type"] != "refresh":
+            raise ForbiddenException("Access denied")
+
+        return payload
