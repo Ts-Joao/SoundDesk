@@ -1,5 +1,6 @@
 from datetime import datetime
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Text, TIMESTAMP, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -7,8 +8,21 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database.base import Base, TimestampMixin
 from app.enums.download_status import DownloadStatus
 
+
+if TYPE_CHECKING:
+    from app.users.models import User
+
 class DownloadJob(Base, TimestampMixin):
     __tablename__ = "download_job"
+
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=True,
+    )
+
+    user: Mapped["User"] = relationship(
+        back_populates="downloads",
+    )
 
     track_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("tracks.id"),

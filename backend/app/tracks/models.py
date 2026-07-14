@@ -1,11 +1,27 @@
-from sqlalchemy import String, Integer, Enum, Text
+from typing import TYPE_CHECKING
+from uuid import UUID
+
+from sqlalchemy import String, Integer, Enum, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.enums.track_status import TrackStatus
 from app.database.base import Base, TimestampMixin
 
+
+if TYPE_CHECKING:
+    from app.users.models import User
+
 class Track(Base, TimestampMixin):
     __tablename__ = "tracks"
+
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=True
+    )
+
+    user: Mapped["User"] = relationship(
+        back_populates="tracks",
+    )
 
     title: Mapped[str] = mapped_column(
         String(255),

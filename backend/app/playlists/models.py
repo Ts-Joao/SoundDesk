@@ -1,12 +1,26 @@
-import uuid
-from sqlalchemy import String, Enum, ForeignKey
+from typing import TYPE_CHECKING
+from uuid import UUID
+
+from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin
 
 
+if TYPE_CHECKING:
+    from app.users.models import User
+
 class Playlist(Base, TimestampMixin):
     __tablename__ = "playlists"
+
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=True
+    )
+
+    user: Mapped["User"] = relationship(
+        back_populates="playlists",
+    )
 
     name: Mapped[str] = mapped_column(
         String(100),
@@ -34,12 +48,12 @@ class Playlist(Base, TimestampMixin):
 class PlaylistTrack(Base, TimestampMixin):
     __tablename__ = "playlist_tracks"
 
-    playlist_id: Mapped[uuid.UUID] = mapped_column(
+    playlist_id: Mapped[UUID] = mapped_column(
         ForeignKey("playlists.id"),
         primary_key=True
     )
 
-    track_id: Mapped[uuid.UUID] = mapped_column(
+    track_id: Mapped[UUID] = mapped_column(
         ForeignKey("tracks.id"),
         primary_key=True
     )

@@ -1,9 +1,16 @@
+from typing import TYPE_CHECKING
 from sqlalchemy import String, Boolean, Enum, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin
 from app.enums.user_roles import UserRoles
 
+
+if TYPE_CHECKING:
+    from app.downloads.models import DownloadJob
+    from app.exports.models import ExportJob
+    from app.playlists.models import Playlist
+    from app.tracks.models import Track
 
 class User(Base, TimestampMixin):
     __tablename__ = "users"
@@ -55,4 +62,24 @@ class User(Base, TimestampMixin):
         "RefreshToken",
         back_populates="user",
         cascade="all, delete-orphan",
+    )
+
+    playlists: Mapped[list["Playlist"]] = relationship(
+        "Playlist",
+        back_populates="user",
+    )
+
+    tracks: Mapped[list["Track"]] = relationship(
+        "Track",
+        back_populates="user",
+    )
+
+    downloads: Mapped[list["DownloadJob"]] = relationship(
+        "DownloadJob",
+        back_populates="user",
+    )
+
+    exports: Mapped[list["ExportJob"]] = relationship(
+        "ExportJob",
+        back_populates="user",
     )
