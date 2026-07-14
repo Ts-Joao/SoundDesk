@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_active_user
-from app.auth.schemas import LoginResponse, RefreshResponse, LoginSchema, LogoutSchema
+from app.auth.schemas import LoginResponse, RefreshResponse, LoginSchema, LogoutSchema, RefreshRequest
 from app.auth.service import AuthService
 from app.database.dependencies import get_db
 from app.users.schemas import UserResponseSchema
@@ -17,7 +17,7 @@ def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
 
 @router.post(
     "/login",
-    response_model=RefreshResponse
+    response_model=LoginResponse
 )
 def login(
         data: LoginSchema,
@@ -32,10 +32,10 @@ def login(
     response_model=RefreshResponse
 )
 def refresh(
-        data: str,
+        token: str,
         service: AuthService = Depends(get_auth_service)
 ):
-    return service.refresh(data)
+    return service.refresh(token)
 
 @router.get(
     "/me",
