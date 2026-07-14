@@ -1,5 +1,5 @@
 from sqlalchemy import String, Boolean, Enum, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin
 from app.enums.user_roles import UserRoles
@@ -49,4 +49,9 @@ class User(Base, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
+    )
+
+    refresh_tokens = relationship(
+        "RefreshToken",
+        back_populates="user",
     )

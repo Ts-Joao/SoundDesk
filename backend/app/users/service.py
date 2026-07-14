@@ -57,9 +57,9 @@ class UserService:
 
     def change_password(self, user_id: UUID, data: ChangePasswordSchema):
         user = self.find_by_id(user_id)
-        passwordMatch = verify_password(data.current_password, user.password_hash)
+        password_match = verify_password(data.current_password, user.password_hash)
 
-        if not passwordMatch:
+        if not password_match:
             raise BadRequestException("Password not match")
 
         user.password = data.new_password
