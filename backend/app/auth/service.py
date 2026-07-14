@@ -1,7 +1,9 @@
+from sqlalchemy.orm import Session
+
 from app.auth.jwt_handler import JWTService
 from app.auth.password import verify_password
 from app.auth.repository import RefreshTokenRepository
-from app.auth.schemas import LoginSchema
+from app.auth.schemas import LoginSchema, RefreshRequest
 from app.auth.utils import hash_refresh_token
 from app.exceptions.exceptions import UnauthorizedException, ForbiddenException
 from app.users.repository import UserRepository
@@ -9,13 +11,10 @@ from app.users.models import User
 
 
 class AuthService:
-    def __init__(
-            self,
-            repository: RefreshTokenRepository,
-            user_repository: UserRepository
-    ):
-        self.repository = repository
-        self.user_repository = user_repository
+    def __init__(self,db: Session):
+        self.db = db
+        self.repository = RefreshTokenRepository(db)
+        self.user_repository = UserRepository(db)
 
     def login(self, data: LoginSchema):
         user = self.user_repository.find_by_email(data.email)
@@ -29,8 +28,6 @@ class AuthService:
         if not user.is_active:
             raise ForbiddenException("Account disabled")
 
-        if not user.email_verified:
-            raise ForbiddenException("Email not verified")
 
         tokens = self._generate_tokens(user)
 
@@ -65,11 +62,15 @@ class AuthService:
 
     def _generate_tokens(self, user: User):
         access_token = JWTService.create_access_token(user.id, user.role)
-        refresh = JWTService.create_refresh_token(user.id, user.role)
+        token, expires_at = JWTService.create_refresh_token(user.id, user.role)
         self.repository.create(
             user.id,
-            hash_refresh_token(refresh.token),
-            refresh.expires_at
+            hash_refresh_token(token),
+            expires_at
         )
 
-        return { "access_token": access_token, "refresh_token": refresh }
+        return {
+            "access_token": access_token,
+            "refresh_token": token,
+            "token_type": "bearer"
+        }

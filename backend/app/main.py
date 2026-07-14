@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request, APIRouter
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer
 from starlette.staticfiles import StaticFiles
 
 from app.exports.router import router as export_playlist
@@ -10,6 +11,7 @@ from app.tracks.router import router as track_router
 from app.playlists.track_router import router as playlist_tracks_router
 from app.downloads.router import router as downloads_router
 from app.users.router import router as user_router
+from app.auth.router import router as auth_router
 
 
 app = FastAPI(
@@ -17,6 +19,7 @@ app = FastAPI(
     redirect_slashes=False
 )
 api_router = APIRouter(prefix="/api")
+security_scheme = HTTPBearer()
 
 app.mount("/storage", StaticFiles(directory="storage"), name="storage")
 
@@ -45,6 +48,7 @@ async def app_exception_handler(
     )
 
 app.include_router(user_router)
+api_router.include_router(auth_router)
 api_router.include_router(playlist_router)
 api_router.include_router(track_router)
 api_router.include_router(playlist_tracks_router)

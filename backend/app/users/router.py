@@ -9,7 +9,7 @@ from app.users.repository import UserRepository
 from app.users.schemas import UserResponseSchema, CreateUserSchema
 from app.users.service import UserService
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.post(
     "",

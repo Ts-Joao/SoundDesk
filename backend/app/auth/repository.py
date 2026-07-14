@@ -19,9 +19,9 @@ class RefreshTokenRepository:
             expires_at: datetime
     ) -> RefreshToken:
         token = RefreshToken(
-            user_id,
-            token,
-            expires_at
+            user_id=user_id,
+            token_hash=token,
+            expires_at=expires_at
         )
 
         self.db.add(token)

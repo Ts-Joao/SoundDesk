@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import APIKeyHeader
 from sqlalchemy.orm import Session
 
 from app.auth.jwt_handler import JWTService
@@ -11,10 +11,10 @@ from app.exceptions.exceptions import UnauthorizedException, ForbiddenException
 from app.users.models import User
 from app.users.repository import UserRepository
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
 
 async def get_current_user(
-        token: str = Depends(oauth2_scheme),
+        token: str = Depends(api_key_header),
         db: Session = Depends(get_db)
 ) -> User:
     payload = JWTService.decode_token(token)
@@ -22,7 +22,7 @@ async def get_current_user(
     if payload["type"] != "access":
         raise UnauthorizedException("Unauthorized")
 
-    user_id = UUID(payload["user_id"])
+    user_id = UUID(payload["sub"])
     repository = UserRepository(db)
     user = repository.find_by_id(user_id)
 
