@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.auth.jwt_handler import JWTService
 from app.auth.password import verify_password
 from app.auth.repository import RefreshTokenRepository
-from app.auth.schemas import LoginSchema, RefreshRequest
+from app.auth.schemas import LoginSchema
 from app.auth.utils import hash_refresh_token
 from app.exceptions.exceptions import UnauthorizedException, ForbiddenException
 from app.users.repository import UserRepository
@@ -52,8 +52,18 @@ class AuthService:
             "token_type": "Bearer",
         }
 
-    def logout(self, token: str):
-        token = self.repository.find_by_hash(token)
+    def logout(
+            self,
+            refresh_token: str,
+    ):
+        payload = JWTService.decode_token(refresh_token)
+
+        if payload["type"] != "refresh":
+            raise UnauthorizedException("Access denied")
+
+        token_hash = hash_refresh_token(refresh_token)
+
+        token = self.repository.find_by_hash(token_hash)
 
         if not token:
             raise UnauthorizedException("Invalid credentials")

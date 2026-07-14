@@ -8,6 +8,9 @@ class LoginSchema(BaseModel):
         max_length=128
     )
 
+class LogoutSchema(BaseModel):
+    refresh_token: str
+
 class LoginResponse(BaseModel):
     access_token: str
     refresh_token: str
