@@ -14,12 +14,25 @@ from app.users.repository import UserRepository
 api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
 
 async def get_current_user(
-        token: str = Depends(api_key_header),
-        db: Session = Depends(get_db)
+    token: str = Depends(api_key_header),
+    db: Session = Depends(get_db)
 ) -> User:
-    payload = JWTService.decode_token(token)
+    if not token:
+        raise UnauthorizedException("Token not provided")
 
-    if payload["type"] != "access":
+    if token.lower().startswith("bearer "):
+        parts = token.split(" ")
+        if len(parts) == 2:
+            token = parts[1]
+        else:
+            raise UnauthorizedException("Invalid token")
+
+    try:
+        payload = JWTService.decode_token(token)
+    except Exception:
+        raise UnauthorizedException("Invalid token")
+
+    if payload.get("type") != "access":
         raise UnauthorizedException("Unauthorized")
 
     user_id = UUID(payload["sub"])
