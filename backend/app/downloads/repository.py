@@ -13,10 +13,12 @@ class DownloadJobRepository:
 
     def create(
             self,
-            track_id: UUID
+            track_id: UUID,
+            user_id: UUID,
     ):
         job = DownloadJob(
             track_id=track_id,
+            user_id=user_id,
             status=DownloadStatus.PENDING,
         )
 
@@ -28,9 +30,10 @@ class DownloadJobRepository:
 
     def find_all(
             self,
+            user_id: UUID,
             status: DownloadStatus | None = None,
     ):
-        query = self.db.query(DownloadJob)
+        query = self.db.query(DownloadJob).filter_by(user_id=user_id)
 
         if status:
             query = query.filter_by(status=status)

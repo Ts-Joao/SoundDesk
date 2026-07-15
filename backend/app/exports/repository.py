@@ -12,11 +12,13 @@ class ExportJobRepository:
 
     def create(
             self,
-            playlist_id: UUID
+            playlist_id: UUID,
+            user_id: UUID,
     ):
         job = ExportJob(
             playlist_id=playlist_id,
-            status=ExportStatus.PENDING
+            status=ExportStatus.PENDING,
+            user_id=user_id,
         )
 
         self.db.add(job)
@@ -25,12 +27,15 @@ class ExportJobRepository:
 
         return job
 
-    def find_all(self):
-        return self.db.query(ExportJob).all()
+    def find_all(
+            self,
+            user_id: UUID,
+    ):
+        return self.db.query(ExportJob).filter(ExportJob.user_id == user_id).all()
 
     def find_by_id(
             self,
-            job_id: UUID
+            job_id: UUID,
     ):
         return self.db.get(ExportJob, job_id)
 

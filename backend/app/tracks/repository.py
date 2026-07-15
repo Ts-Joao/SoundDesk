@@ -11,8 +11,12 @@ class TrackRepository():
     def __init__(self, db: Session):
         self.db = db
 
-    def create(self, data: CreateTrackSchema) -> Track:
-        track = Track(**data.model_dump())
+    def create(
+            self,
+            data: CreateTrackSchema,
+            user_id: UUID
+    ) -> Track:
+        track = Track(**data.model_dump(), user_id=user_id)
 
         self.db.add(track)
         self.db.commit()
@@ -20,11 +24,14 @@ class TrackRepository():
 
         return track
 
-    def find_all(self):
-        return self.db.query(Track).all()
+    def find_all(
+            self,
+            user_id: UUID
+    ):
+        return self.db.query(Track).filter(Track.user_id == user_id).all()
 
     def find_by_id(self, track_id: UUID):
-        return self.db.get(Track, track_id)
+        return self.db.query(Track).filter(Track.id == track_id).first()
 
     def update(
             self,
