@@ -35,7 +35,7 @@ class ExportJob(Base, TimestampMixin):
         default=ExportStatus.PENDING
     )
 
-    celery_task_id: Mapped[UUID | None] = mapped_column(
+    celery_task_id: Mapped[str | None] = mapped_column(
         Text,
         nullable=True
     )

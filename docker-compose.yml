@@ -39,7 +39,8 @@ services:
   worker:
     build:
       context: ./backend
-    command: celery -A app.workers.celery_app worker --loglevel=info
+    container_name: sound_worker
+    command: celery -A app.workers.celery worker --loglevel=info
     volumes:
       - ./backend:/app
     depends_on:

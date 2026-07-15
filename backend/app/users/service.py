@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from app.auth.password import hash_password, verify_password
-from app.exceptions.exceptions import NotFoundException, BadRequestException
+from app.exceptions.exceptions import ConflictException, NotFoundException, BadRequestException
 from app.users.repository import UserRepository
 from app.users.schemas import CreateUserSchema, UpdateUserSchema, ChangePasswordSchema
 
@@ -14,9 +14,13 @@ class UserService:
         self.repository = repository
 
     def create(self, data: CreateUserSchema):
+        if self.repository.find_by_email(data.email):
+            raise ConflictException("Email already registered")
+        if self.repository.find_by_username(data.username):
+            raise ConflictException("Username already registered")
         user_data = data.model_dump()
-        password_limpa = user_data.pop("password", None) or user_data.get("password_hash")
-        user_data["password_hash"] = hash_password(password_limpa)
+        password = user_data.pop("password_hash")
+        user_data["password_hash"] = hash_password(password)
         user = self.repository.create(user_data)
         return user
 
@@ -62,8 +66,7 @@ class UserService:
         if not password_match:
             raise BadRequestException("Password not match")
 
-        user.password = data.new_password
-        self.repository.reset_password(user, password=data.new_password)
+        self.repository.reset_password(user, password=hash_password(data.new_password))
         return user
 
     def deactivate(self, user_id: UUID):

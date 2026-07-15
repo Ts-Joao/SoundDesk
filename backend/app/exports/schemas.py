@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from app.enums.download_status import DownloadStatus
+from app.enums.export_status import ExportStatus
 
 
 class ExportJobResponseSchema(BaseModel):
@@ -11,7 +11,7 @@ class ExportJobResponseSchema(BaseModel):
     playlist_id: UUID
     user_id: UUID
 
-    status: DownloadStatus
+    status: ExportStatus
 
     file_path: str | None = None
 

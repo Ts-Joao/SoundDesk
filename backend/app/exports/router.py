@@ -36,7 +36,7 @@ def export_playlist(
 
     return service.create(playlist_id, current_user.id)
 
-@router.post('/playlists/{job_id}/retry}')
+@router.post('/playlists/{job_id}/retry')
 def retry(
         job_id: UUID,
         db: Session = Depends(get_db),

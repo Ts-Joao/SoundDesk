@@ -21,7 +21,8 @@ router = APIRouter(prefix="/downloads", tags=["Downloads"])
 )
 def download_playlist(
         playlist_id: UUID,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
     playlist_repository = PlaylistRepository(db)
     download_repository = DownloadJobRepository(db)
@@ -30,7 +31,7 @@ def download_playlist(
         playlist_repository,
     )
 
-    jobs_created = service.download_playlist(playlist_id)
+    jobs_created = service.download_playlist(playlist_id, current_user.id)
 
     return {
         "message": "Download started",
@@ -40,7 +41,8 @@ def download_playlist(
 @router.post("/{job_id}/retry")
 def retry_download(
         job_id: UUID,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
     playlist_repository = PlaylistRepository(db)
     download_repository = DownloadJobRepository(db)
@@ -48,12 +50,13 @@ def retry_download(
         download_repository,
         playlist_repository,
     )
-    return service.retry(job_id)
+    return service.retry(job_id, current_user.id)
 
 @router.post("/{job_id}/cancel")
 def cancel_download(
         job_id: UUID,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
 ):
     playlist_repository = PlaylistRepository(db)
     download_repository = DownloadJobRepository(db)
@@ -62,7 +65,7 @@ def cancel_download(
         playlist_repository,
     )
 
-    return service.cancel(job_id)
+    return service.cancel(job_id, current_user.id)
 
 @router.get(
     "/jobs",

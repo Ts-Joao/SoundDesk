@@ -46,7 +46,8 @@ class AuthService:
         if db_refresh_token.revoked_at:
             raise UnauthorizedException("Access denied")
 
-        if db_refresh_token.expires_at < datetime.now():
+        # expires_at is currently stored as SQL TIMESTAMP (without timezone).
+        if db_refresh_token.expires_at < datetime.now(UTC).replace(tzinfo=None):
             raise UnauthorizedException("Access denied")
 
         self.repository.revoke(db_refresh_token)
@@ -65,9 +66,7 @@ class AuthService:
     ):
         self._is_refresh_token_valid(refresh_token)
 
-        token_hash = hash_refresh_token(refresh_token)
-
-        token = self._find_by_hash(token_hash)
+        token = self._find_by_hash(refresh_token)
 
         self.repository.revoke(token)
 

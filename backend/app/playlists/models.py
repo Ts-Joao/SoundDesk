@@ -49,11 +49,11 @@ class PlaylistTrack(Base, TimestampMixin):
     __tablename__ = "playlist_tracks"
 
     playlist_id: Mapped[UUID] = mapped_column(
-        ForeignKey("playlists.id"),
+        ForeignKey("playlists.id", ondelete="CASCADE"),
         primary_key=True
     )
 
     track_id: Mapped[UUID] = mapped_column(
-        ForeignKey("tracks.id"),
+        ForeignKey("tracks.id", ondelete="CASCADE"),
         primary_key=True
     )

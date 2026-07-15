@@ -11,6 +11,7 @@ from app.users.models import User
 from app.tracks.repository import TrackRepository
 from app.common.file_service import FileService
 from app.tracks.service import TrackService
+from app.playlists.track_repository import PlaylistTrackRepository
 from app.tracks.schemas import (
     CreateTrackSchema,
     UpdateTrackSchema,
@@ -26,13 +27,12 @@ router = APIRouter(prefix="/tracks", tags=["Tracks"])
 def create_track(
         data: CreateTrackSchema,
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user),
 ):
     repository = TrackRepository(db)
     file_service = FileService()
-    service =TrackService(repository, file_service)
+    service = TrackService(repository, file_service)
 
-    return  service.create(data, current_user.id)
+    return service.create(data)
 
 @router.get(
     "",
@@ -44,7 +44,7 @@ def find_all(
 ):
     repository = TrackRepository(db)
     file_service = FileService()
-    service =TrackService(repository, file_service)
+    service = TrackService(repository, file_service)
 
     return service.find_all(current_user.id)
 
@@ -55,13 +55,12 @@ def find_all(
 def find_by_id(
         track_id: UUID,
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user),
 ):
     repository = TrackRepository(db)
     file_service = FileService()
-    service =TrackService(repository, file_service)
+    service = TrackService(repository, file_service)
 
-    return service.find_by_id(track_id, current_user.id)
+    return service.find_by_id(track_id)
 
 @router.patch(
     "/{track_id}",
@@ -71,13 +70,12 @@ def update(
         track_id: UUID,
         data: UpdateTrackSchema,
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user),
 ):
     repository = TrackRepository(db)
     file_service = FileService()
-    service =TrackService(repository, file_service)
+    service = TrackService(repository, file_service)
 
-    return service.update(track_id, data, current_user.id)
+    return service.update(track_id, data)
 
 @router.delete(
     "/{track_id}",
@@ -88,11 +86,22 @@ def delete(
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user),
 ):
-    repository = TrackRepository(db)
-    file_service = FileService()
-    service =TrackService(repository, file_service)
+    from app.playlists.repository import PlaylistRepository
 
-    service.delete(track_id, current_user.id)
+    track_repo = TrackRepository(db)
+    file_service = FileService()
+    track_service = TrackService(track_repo, file_service)
+
+    playlist_repo = PlaylistRepository(db)
+    user_playlists = playlist_repo.find_all(current_user.id)
+    pt_repo = PlaylistTrackRepository(db)
+
+    for playlist in user_playlists:
+        relation = pt_repo.find_relation(playlist.id, track_id)
+        if relation:
+            pt_repo.delete(relation)
+
+    track_service.delete_if_orphan(track_id)
 
 @router.get(
     "/{track_id}/download",
@@ -100,12 +109,11 @@ def delete(
 def download_track(
         track_id: UUID,
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user),
 ):
     repository = TrackRepository(db)
     file_service = FileService()
     service = TrackService(repository, file_service)
-    track = service.find_by_id(track_id, current_user.id)
+    track = service.find_by_id(track_id)
 
     if not track.file_path:
         from app.exceptions.exceptions import NotFoundException

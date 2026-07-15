@@ -2,7 +2,7 @@ from datetime import datetime
 import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Text, TIMESTAMP, Enum, ForeignKey
+from sqlalchemy import Text, TIMESTAMP, Enum, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin
@@ -14,6 +14,10 @@ if TYPE_CHECKING:
 
 class DownloadJob(Base, TimestampMixin):
     __tablename__ = "download_job"
+    __table_args__ = (
+        Index("ix_download_job_track_status", "track_id", "status"),
+        Index("ix_download_job_user_created_at", "user_id", "created_at"),
+    )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -40,7 +44,7 @@ class DownloadJob(Base, TimestampMixin):
         default=DownloadStatus.PENDING,
     )
 
-    celery_task_id: Mapped[uuid.UUID | None] = mapped_column(
+    celery_task_id: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
     )

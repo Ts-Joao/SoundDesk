@@ -17,6 +17,9 @@ class FileService:
         if not relative_path:
             return
 
-        path = self.BASE_DIR / relative_path
+        path = (self.BASE_DIR / relative_path).resolve()
+        base_dir = self.BASE_DIR.resolve()
+        if base_dir not in path.parents:
+            raise ValueError("Invalid storage path")
         if path.exists():
             path.unlink()

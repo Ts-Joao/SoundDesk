@@ -79,7 +79,7 @@ class ExportJobRepository:
     def update_celery_task_id(
             self,
             job_id: UUID,
-            task_id: UUID
+            task_id: str
     ):
         job = self.find_by_id(job_id)
         job.celery_task_id = task_id

@@ -20,11 +20,11 @@ const SECTIONS: {
   color: string;
   icon: React.ReactNode;
 }[] = [
-  { key: "processing", label: "Em Processamento", color: "#3b82f6", icon: <Spinner    size={18} weight="duotone" /> },
-  { key: "pending",    label: "Na Fila",           color: "#94a3b8", icon: <ListDashes size={18} weight="duotone" /> },
-  { key: "failed",     label: "Com Erro",          color: "#ef4444", icon: <XCircle    size={18} weight="duotone" /> },
-  { key: "completed",  label: "Concluídos",        color: "#22c55e", icon: <CheckCircle size={18} weight="duotone" /> },
-];
+    { key: "processing", label: "Em Processamento", color: "#3b82f6", icon: <Spinner size={18} weight="duotone" /> },
+    { key: "pending", label: "Na Fila", color: "#94a3b8", icon: <ListDashes size={18} weight="duotone" /> },
+    { key: "failed", label: "Com Erro", color: "#ef4444", icon: <XCircle size={18} weight="duotone" /> },
+    { key: "completed", label: "Concluídos", color: "#22c55e", icon: <CheckCircle size={18} weight="duotone" /> },
+  ];
 
 export function QueueView() {
   const { data: jobs, isLoading } = useQueue();
@@ -43,15 +43,15 @@ export function QueueView() {
         {isLoading
           ? Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} small />)
           : SECTIONS.map((s) => (
-              <StatCard
-                key={s.key}
-                label={s.label}
-                value={(jobs ?? []).filter((j) => j.status === s.key).length}
-                icon={s.icon}
-                color={s.color}
-                small
-              />
-            ))
+            <StatCard
+              key={s.key}
+              label={s.label}
+              value={(jobs ?? []).filter((j) => j.status === s.key).length}
+              icon={s.icon}
+              color={s.color}
+              small
+            />
+          ))
         }
       </div>
 

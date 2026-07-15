@@ -7,7 +7,6 @@ from app.enums.user_roles import UserRoles
 from app.playlists.schemas import PlaylistResponseSchema
 from app.downloads.schemas import DownloadJobResponseSchema
 from app.exports.schemas import ExportJobResponseSchema
-from app.tracks.schemas import TrackResponseSchema
 
 class UserBaseSchema(BaseModel):
     username: str = Field(
@@ -59,7 +58,6 @@ class UserResponseSchema(UserBaseSchema):
     is_active: bool
 
     playlists: list["PlaylistResponseSchema"]
-    tracks: list["TrackResponseSchema"]
     downloads: list["DownloadJobResponseSchema"]
     exports: list["ExportJobResponseSchema"]
 

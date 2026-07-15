@@ -28,7 +28,7 @@ class UserRepository():
         return self.db.query(User).filter(User.email == email).first()
 
     def find_by_username(self, username: str):
-        return self.db.get(User, username)
+        return self.db.query(User).filter(User.username == username).first()
 
     def update(
             self,

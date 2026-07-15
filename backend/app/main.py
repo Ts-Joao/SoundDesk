@@ -1,7 +1,6 @@
-from fastapi import FastAPI, Request, APIRouter
+from fastapi import FastAPI, Request, APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer
 from starlette.staticfiles import StaticFiles
 
 from app.exports.router import router as export_playlist
@@ -19,7 +18,6 @@ app = FastAPI(
     redirect_slashes=False
 )
 api_router = APIRouter(prefix="/api")
-security_scheme = HTTPBearer()
 
 app.mount("/storage", StaticFiles(directory="storage"), name="storage")
 
@@ -45,6 +43,23 @@ async def app_exception_handler(
         content={
             "message": exc.message
         },
+    )
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(
+        request: Request,
+        exc: HTTPException
+):
+    # HTTPBearer with auto_error=True raises 403 when token is missing;
+    # normalise to 401 to match the rest of the auth error responses.
+    if exc.status_code == 403 and "Not authenticated" in str(exc.detail):
+        return JSONResponse(
+            status_code=401,
+            content={"message": "Token not provided"},
+        )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"message": str(exc.detail)},
     )
 
 app.include_router(user_router)

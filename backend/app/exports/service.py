@@ -10,7 +10,6 @@ from app.exports.models import ExportJob
 from app.exports.repository import ExportJobRepository
 from app.playlists.repository import PlaylistRepository
 from app.common.file_service import FileService
-from app.workers.tasks import process_export
 
 
 class ExportJobService:
@@ -30,12 +29,16 @@ class ExportJobService:
             playlist_id: UUID,
             user_id: UUID,
     ):
-        job = self.repository.create(playlist_id, user_id)
+        from app.playlists.service import PlaylistService
+        from app.workers.tasks import process_export
 
-        process_export.delay(
+        PlaylistService(self.playlist_repository).find_by_id(playlist_id, user_id)
+        job = self.repository.create(playlist_id, user_id)
+        task = process_export.delay(
             str(job.id),
             str(playlist_id),
         )
+        self.repository.update_celery_task_id(job.id, task.id)
 
         return job
 
@@ -179,7 +182,7 @@ class ExportJobService:
 
         self.repository.update_status(job_id, ExportStatus.RETRYING)
 
-        new_job = self.repository.create(playlist_id=job.playlist_id)
+        new_job = self.repository.create(playlist_id=job.playlist_id, user_id=user_id)
 
         from app.workers.tasks import process_export
         task = process_export.delay(
@@ -206,7 +209,7 @@ class ExportJobService:
             celery_app.control.revoke(job.celery_task_id, terminate=True)
 
         self.repository.update_status(job_id, ExportStatus.CANCELED)
-        return self.find_by_id(job_id)
+        return self.find_by_id(job_id, user_id)
 
     @staticmethod
     def _verify_ownership(

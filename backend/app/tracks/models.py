@@ -1,26 +1,14 @@
-from typing import TYPE_CHECKING
-from uuid import UUID
-
-from sqlalchemy import String, Integer, Enum, Text, ForeignKey
+from sqlalchemy import String, Integer, Enum, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.enums.track_status import TrackStatus
 from app.database.base import Base, TimestampMixin
 
 
-if TYPE_CHECKING:
-    from app.users.models import User
-
 class Track(Base, TimestampMixin):
     __tablename__ = "tracks"
-
-    user_id: Mapped[UUID] = mapped_column(
-        ForeignKey("users.id"),
-        nullable=False
-    )
-
-    user: Mapped["User"] = relationship(
-        back_populates="tracks",
+    __table_args__ = (
+        UniqueConstraint("source_url", name="uq_tracks_source_url"),
     )
 
     title: Mapped[str] = mapped_column(
@@ -68,5 +56,4 @@ class Track(Base, TimestampMixin):
     downloads = relationship(
         "DownloadJob",
         back_populates="track",
-        cascade="all, delete-orphan",
     )

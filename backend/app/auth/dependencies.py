@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import Depends
-from fastapi.security import APIKeyHeader
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from app.auth.jwt_handler import JWTService
@@ -11,21 +11,16 @@ from app.exceptions.exceptions import UnauthorizedException, ForbiddenException
 from app.users.models import User
 from app.users.repository import UserRepository
 
-api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
+http_bearer = HTTPBearer(auto_error=False)
 
 async def get_current_user(
-    token: str = Depends(api_key_header),
+    credentials: HTTPAuthorizationCredentials | None = Depends(http_bearer),
     db: Session = Depends(get_db)
 ) -> User:
-    if not token:
+    if not credentials or not credentials.credentials:
         raise UnauthorizedException("Token not provided")
 
-    if token.lower().startswith("bearer "):
-        parts = token.split(" ")
-        if len(parts) == 2:
-            token = parts[1]
-        else:
-            raise UnauthorizedException("Invalid token")
+    token = credentials.credentials
 
     try:
         payload = JWTService.decode_token(token)

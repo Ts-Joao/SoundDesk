@@ -12,7 +12,7 @@ class PlaylistService:
         self.repository = repository
 
     def create(
-            self, 
+            self,
             data: CreatePlaylistSchema,
             user_id: UUID
     ) -> Playlist:
@@ -53,9 +53,20 @@ class PlaylistService:
             playlist_id: UUID,
             user_id: UUID
     ) -> Playlist:
+        from app.tracks.repository import TrackRepository
+        from app.tracks.service import TrackService
+        from app.common.file_service import FileService
+
         playlist = self.find_by_id(playlist_id, user_id)
 
+        track_ids = [track.id for track in playlist.tracks]
+
         self.repository.delete(playlist)
+
+        track_repo = TrackRepository(self.repository.db)
+        track_service = TrackService(track_repo, FileService())
+        for track_id in track_ids:
+            track_service.delete_if_orphan(track_id)
 
         return playlist
 

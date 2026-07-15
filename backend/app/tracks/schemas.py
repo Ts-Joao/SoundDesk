@@ -25,7 +25,6 @@ class UpdateTrackSchema(TrackBaseSchema):
 
 class TrackResponseSchema(BaseModel):
     id: UUID
-    user_id: UUID
     title: str
     artist: str
     source_url: str
