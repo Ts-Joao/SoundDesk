@@ -15,9 +15,9 @@ if TYPE_CHECKING:
 class ExportJob(Base, TimestampMixin):
     __tablename__ = 'export_jobs'
 
-    user_id: Mapped[UUID | None] = mapped_column(
+    user_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=True
+        nullable=False
     )
 
     user: Mapped["User"] = relationship(

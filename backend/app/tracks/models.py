@@ -14,9 +14,9 @@ if TYPE_CHECKING:
 class Track(Base, TimestampMixin):
     __tablename__ = "tracks"
 
-    user_id: Mapped[UUID | None] = mapped_column(
+    user_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id"),
-        nullable=True
+        nullable=False
     )
 
     user: Mapped["User"] = relationship(
