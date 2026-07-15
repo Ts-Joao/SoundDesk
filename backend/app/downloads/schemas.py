@@ -9,6 +9,7 @@ from app.enums.download_status import DownloadStatus
 class DownloadJobResponseSchema(BaseModel):
     id: UUID
     track_id: UUID
+    user_id: UUID
 
     status: DownloadStatus
 

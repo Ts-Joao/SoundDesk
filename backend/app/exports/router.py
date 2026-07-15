@@ -5,7 +5,9 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
+from app.auth.dependencies import get_current_user
 from app.database.dependencies import get_db
+from app.users.models import User
 from app.exports.repository import ExportJobRepository
 from app.playlists.repository import PlaylistRepository
 from app.exports.schemas import ExportJobResponseSchema
@@ -20,7 +22,8 @@ router = APIRouter(prefix="/exports", tags=["exports"])
 )
 def export_playlist(
         playlist_id: UUID,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
     repository = ExportJobRepository(db)
     playlist_repository = PlaylistRepository(db)
@@ -31,12 +34,13 @@ def export_playlist(
         file_service,
     )
 
-    return service.create(playlist_id)
+    return service.create(playlist_id, current_user.id)
 
-@router.post('/playlists/{job_id}/retry}')
+@router.post('/playlists/{job_id}/retry')
 def retry(
         job_id: UUID,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
     repository = ExportJobRepository(db)
     playlist_repository = PlaylistRepository(db)
@@ -47,12 +51,13 @@ def retry(
         file_service,
     )
 
-    return service.retry(job_id)
+    return service.retry(job_id, current_user.id)
 
 @router.post('/playlists/{job_id}/cancel')
 def cancel(
         job_id: UUID,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
     repository = ExportJobRepository(db)
     playlist_repository = PlaylistRepository(db)
@@ -62,13 +67,16 @@ def cancel(
         playlist_repository,
         file_service,
     )
-    return service.cancel(job_id)
+    return service.cancel(job_id, current_user.id)
 
 @router.get(
     "",
     response_model=list[ExportJobResponseSchema],
 )
-def find_all(db: Session = Depends(get_db)):
+def find_all(
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
     repository = ExportJobRepository(db)
     playlist_repository = PlaylistRepository(db)
     file_service = FileService()
@@ -78,7 +86,7 @@ def find_all(db: Session = Depends(get_db)):
         file_service,
     )
 
-    return service.find_all()
+    return service.find_all(current_user.id)
 
 @router.get(
     '/{job_id}',
@@ -86,7 +94,8 @@ def find_all(db: Session = Depends(get_db)):
 )
 def find_by_id(
         job_id: UUID,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
     repository = ExportJobRepository(db)
     playlist_repository = PlaylistRepository(db)
@@ -97,14 +106,15 @@ def find_by_id(
         file_service,
     )
 
-    return service.find_by_id(job_id)
+    return service.find_by_id(job_id, current_user.id)
 
 @router.get(
     '/{job_id}/download',
 )
 def get_zip(
         job_id: UUID,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
     repository = ExportJobRepository(db)
     playlist_repository = PlaylistRepository(db)
@@ -115,7 +125,7 @@ def get_zip(
         file_service,
     )
 
-    path = service.get_zip(job_id)
+    path = service.get_zip(job_id, current_user.id)
 
     return FileResponse(
         path,

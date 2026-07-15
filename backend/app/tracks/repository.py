@@ -3,8 +3,9 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.enums.track_status import TrackStatus
-from app.tracks.model import Track
+from app.tracks.models import Track
 from app.tracks.schemas import CreateTrackSchema, UpdateTrackSchema
+from app.playlists.models import PlaylistTrack
 
 
 class TrackRepository():
@@ -20,11 +21,22 @@ class TrackRepository():
 
         return track
 
-    def find_all(self):
-        return self.db.query(Track).all()
+    def find_all(self, user_id: UUID):
+        from app.playlists.models import Playlist
+        return (
+            self.db.query(Track)
+            .join(PlaylistTrack, PlaylistTrack.track_id == Track.id)
+            .join(Playlist, Playlist.id == PlaylistTrack.playlist_id)
+            .filter(Playlist.user_id == user_id)
+            .distinct()
+            .all()
+        )
 
     def find_by_id(self, track_id: UUID):
-        return self.db.get(Track, track_id)
+        return self.db.query(Track).filter(Track.id == track_id).first()
+
+    def find_by_source_url(self, source_url: str) -> Track | None:
+        return self.db.query(Track).filter(Track.source_url == source_url).first()
 
     def update(
             self,
@@ -55,3 +67,18 @@ class TrackRepository():
     def delete(self, track: Track):
         self.db.delete(track)
         self.db.commit()
+
+    def count_playlist_references(self, track_id: UUID) -> int:
+        return (
+            self.db.query(PlaylistTrack)
+            .filter(PlaylistTrack.track_id == track_id)
+            .count()
+        )
+
+    def count_download_references(self, track_id: UUID) -> int:
+        from app.downloads.models import DownloadJob
+        return (
+            self.db.query(DownloadJob)
+            .filter(DownloadJob.track_id == track_id)
+            .count()
+        )

@@ -1,11 +1,15 @@
-from sqlalchemy import String, Integer, Enum, Text
+from sqlalchemy import String, Integer, Enum, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.enums.track_status import TrackStatus
 from app.database.base import Base, TimestampMixin
 
+
 class Track(Base, TimestampMixin):
     __tablename__ = "tracks"
+    __table_args__ = (
+        UniqueConstraint("source_url", name="uq_tracks_source_url"),
+    )
 
     title: Mapped[str] = mapped_column(
         String(255),
@@ -52,5 +56,4 @@ class Track(Base, TimestampMixin):
     downloads = relationship(
         "DownloadJob",
         back_populates="track",
-        cascade="all, delete-orphan",
     )

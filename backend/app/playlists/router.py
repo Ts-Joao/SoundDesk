@@ -3,7 +3,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.auth.dependencies import get_current_user
 from app.database.dependencies import get_db
+from app.users.models import User
 from app.playlists.repository import PlaylistRepository
 from app.playlists.service import PlaylistService
 from app.playlists.schemas import (
@@ -21,22 +23,26 @@ router = APIRouter(prefix="/playlists", tags=["Playlists"])
 )
 def create_playlist(
         data: CreatePlaylistSchema,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
 ):
     repository = PlaylistRepository(db)
     service = PlaylistService(repository)
 
-    return service.create(data)
+    return service.create(data, current_user.id)
 
 @router.get(
     "",
     response_model=list[PlaylistResponseSchema]
 )
-def find_all(db: Session = Depends(get_db)):
+def find_all(
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
     repository = PlaylistRepository(db)
     service = PlaylistService(repository)
 
-    return service.find_all()
+    return service.find_all(current_user.id)
 
 @router.get(
     "/{playlist_id}",
@@ -44,12 +50,13 @@ def find_all(db: Session = Depends(get_db)):
 )
 def find_by_id(
         playlist_id: UUID,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
 ):
     repository = PlaylistRepository(db)
     service = PlaylistService(repository)
 
-    return service.find_by_id(playlist_id)
+    return service.find_by_id(playlist_id, current_user.id)
 
 @router.patch(
     "/{playlist_id}",
@@ -58,12 +65,13 @@ def find_by_id(
 def update(
         playlist_id: UUID,
         data: UpdatePlaylistSchema,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
 ):
     repository = PlaylistRepository(db)
     service = PlaylistService(repository)
 
-    return  service.update(playlist_id, data)
+    return  service.update(playlist_id, data, current_user.id)
 
 @router.delete(
     "/{playlist_id}",
@@ -71,9 +79,10 @@ def update(
 )
 def delete(
         playlist_id: UUID,
-        db:Session =Depends(get_db)
+        db:Session =Depends(get_db),
+        current_user: User = Depends(get_current_user),
 ):
     repository = PlaylistRepository(db)
     service = PlaylistService(repository)
 
-    return service.delete(playlist_id)
+    return service.delete(playlist_id, current_user.id)

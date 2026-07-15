@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.enums.export_status import ExportStatus
-from app.exports.model import ExportJob
+from app.exports.models import ExportJob
 
 
 class ExportJobRepository:
@@ -12,11 +12,13 @@ class ExportJobRepository:
 
     def create(
             self,
-            playlist_id: UUID
+            playlist_id: UUID,
+            user_id: UUID,
     ):
         job = ExportJob(
             playlist_id=playlist_id,
-            status=ExportStatus.PENDING
+            status=ExportStatus.PENDING,
+            user_id=user_id,
         )
 
         self.db.add(job)
@@ -25,12 +27,15 @@ class ExportJobRepository:
 
         return job
 
-    def find_all(self):
-        return self.db.query(ExportJob).all()
+    def find_all(
+            self,
+            user_id: UUID,
+    ):
+        return self.db.query(ExportJob).filter(ExportJob.user_id == user_id).all()
 
     def find_by_id(
             self,
-            job_id: UUID
+            job_id: UUID,
     ):
         return self.db.get(ExportJob, job_id)
 
@@ -74,7 +79,7 @@ class ExportJobRepository:
     def update_celery_task_id(
             self,
             job_id: UUID,
-            task_id: UUID
+            task_id: str
     ):
         job = self.find_by_id(job_id)
         job.celery_task_id = task_id

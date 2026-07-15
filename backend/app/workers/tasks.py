@@ -36,7 +36,7 @@ def process_download(job_id: UUID, track_id: UUID):
             track_repository=track_repository,
         )
 
-        downloader_service.process_track(job_id, track_id)
+        downloader_service.process_track(UUID(str(job_id)), UUID(str(track_id)))
     finally:
         db.close()
 
@@ -57,6 +57,9 @@ def process_export(
             file_service=file_service
         )
 
-        service.process_export_playlist(job_id=job_id, playlist_id=playlist_id)
+        service.process_export_playlist(
+            job_id=UUID(str(job_id)),
+            playlist_id=UUID(str(playlist_id)),
+        )
     finally:
         db.close()

@@ -15,3 +15,9 @@ class ConflictException(AppException):
 
 class BadRequestException(AppException):
     status_code = 400
+
+class UnauthorizedException(AppException):
+    status_code = 401
+
+class ForbiddenException(AppException):
+    status_code = 403
