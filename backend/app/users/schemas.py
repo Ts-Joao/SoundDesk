@@ -1,9 +1,13 @@
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.enums.user_roles import UserRoles
-
+from app.playlists.schemas import PlaylistResponseSchema
+from app.downloads.schemas import DownloadJobResponseSchema
+from app.exports.schemas import ExportJobResponseSchema
+from app.tracks.schemas import TrackResponseSchema
 
 class UserBaseSchema(BaseModel):
     username: str = Field(
@@ -53,6 +57,14 @@ class UserResponseSchema(UserBaseSchema):
     role: UserRoles
     email_verified: bool
     is_active: bool
+
+    playlists: list["PlaylistResponseSchema"]
+    tracks: list["TrackResponseSchema"]
+    downloads: list["DownloadJobResponseSchema"]
+    exports: list["ExportJobResponseSchema"]
+
     model_config = ConfigDict(
         from_attributes=True,
     )
+
+UserResponseSchema.model_rebuild()

@@ -48,6 +48,7 @@ class UpdatePlaylistSchema(BaseModel):
 
 class PlaylistResponseSchema(PlaylistBaseSchema):
     id: UUID
+    user_id: UUID 
 
     model_config = {
         "from_attributes": True
