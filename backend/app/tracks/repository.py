@@ -1,11 +1,12 @@
 from uuid import UUID
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.enums.track_status import TrackStatus
 from app.tracks.models import Track
 from app.tracks.schemas import CreateTrackSchema, UpdateTrackSchema
-from app.playlists.models import PlaylistTrack
+from app.playlists.models import PlaylistTrack, Playlist
 
 
 class TrackRepository():
@@ -81,4 +82,27 @@ class TrackRepository():
             self.db.query(DownloadJob)
             .filter(DownloadJob.track_id == track_id)
             .count()
+        )
+
+    def count_by_user(self, user_id: UUID) -> int:
+        return (
+            self.db.query(func.count(func.distinct(PlaylistTrack.track_id)))
+            .join(Playlist, Playlist.id == PlaylistTrack.playlist_id)
+            .filter(Playlist.user_id == user_id)
+            .scalar()
+        )
+
+    def find_recent(
+            self,
+            user_id: UUID,
+            limit: int = 5
+    ):
+        return (
+            self.db.query(Track)
+            .join(PlaylistTrack)
+            .join(Playlist)
+            .filter(Playlist.user_id == user_id)
+            .order_by(Track.created_at.desc())
+            .limit(limit)
+            .all()
         )

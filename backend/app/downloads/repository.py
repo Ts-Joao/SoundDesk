@@ -81,3 +81,46 @@ class DownloadJobRepository:
             .where(DownloadJob.id == job_id, DownloadJob.status.in_(ACTIVE_STATUSES))
             .values(status=DownloadStatus.CANCELED, finished_at=datetime.now(UTC))
         )
+
+    def count_processing(self, user_id: UUID):
+        return (
+            self.db.query(DownloadJob)
+            .filter(
+                DownloadJob.user_id == user_id,
+                DownloadJob.status == DownloadStatus.PROCESSING
+            )
+            .count()
+        )
+
+    def count_completed(self, user_id: UUID):
+        return (
+            self.db.query(DownloadJob)
+            .filter(
+                DownloadJob.user_id == user_id,
+                DownloadJob.status == DownloadStatus.COMPLETED,
+            )
+            .count()
+        )
+
+    def count_failed(self, user_id: UUID):
+        return (
+            self.db.query(DownloadJob)
+            .filter(
+                DownloadJob.user_id == user_id,
+                DownloadJob.status == DownloadStatus.FAILED,
+            )
+            .count()
+        )
+
+    def find_recent(
+            self,
+            user_id: UUID,
+            limit: int = 5
+    ):
+        return (
+            self.db.query(DownloadJob)
+            .filter(DownloadJob.user_id == user_id)
+            .order_by(DownloadJob.created_at.desc())
+            .limit(limit)
+            .all()
+        )

@@ -88,3 +88,29 @@ class ExportJobRepository:
         self.db.refresh(job)
 
         return job
+
+    def count_processing(self, user_id: UUID):
+        return (
+            self.db.query(ExportJob)
+            .filter(ExportJob.user_id == user_id)
+            .count()
+        )
+
+    def count_completed(self, user_id: UUID):
+        return (
+            self.db.query(ExportJob)
+            .filter(ExportJob.user_id == user_id)
+            .count()
+        )
+
+    def find_recent(
+            self,
+            user_id: UUID,
+            limit: int = 5
+    ):
+        return (
+            self.db.query(ExportJob)
+            .filter(ExportJob.user_id == user_id)
+            .limit(limit)
+            .all()
+        )

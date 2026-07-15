@@ -47,3 +47,23 @@ class PlaylistRepository():
     def delete(self, playlist: Playlist):
         self.db.delete(playlist)
         self.db.commit()
+
+    def count_by_user(self, user_id: UUID):
+        return (
+            self.db.query(Playlist)
+            .filter(Playlist.user_id == user_id)
+            .count()
+        )
+
+    def find_recent(
+            self,
+            user_id: UUID,
+            limit: int = 5
+    ):
+        return (
+            self.db.query(Playlist)
+            .filter(Playlist.user_id == user_id)
+            .order_by(Playlist.created_at.desc())
+            .limit(limit)
+            .all()
+        )

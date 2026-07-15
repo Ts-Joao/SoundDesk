@@ -11,6 +11,7 @@ from app.playlists.track_router import router as playlist_tracks_router
 from app.downloads.router import router as downloads_router
 from app.users.router import router as user_router
 from app.auth.router import router as auth_router
+from app.dashboard.router import router as dashboard_router
 
 
 app = FastAPI(
@@ -50,8 +51,6 @@ async def http_exception_handler(
         request: Request,
         exc: HTTPException
 ):
-    # HTTPBearer with auto_error=True raises 403 when token is missing;
-    # normalise to 401 to match the rest of the auth error responses.
     if exc.status_code == 403 and "Not authenticated" in str(exc.detail):
         return JSONResponse(
             status_code=401,
@@ -62,12 +61,13 @@ async def http_exception_handler(
         content={"message": str(exc.detail)},
     )
 
-app.include_router(user_router)
+api_router.include_router(user_router)
 api_router.include_router(auth_router)
 api_router.include_router(playlist_router)
 api_router.include_router(track_router)
 api_router.include_router(playlist_tracks_router)
 api_router.include_router(downloads_router)
 api_router.include_router(export_playlist)
+api_router.include_router(dashboard_router)
 
 app.include_router(api_router)
