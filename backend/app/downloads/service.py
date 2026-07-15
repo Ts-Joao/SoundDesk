@@ -1,8 +1,9 @@
 from uuid import UUID
 
-from app.exceptions.exceptions import NotFoundException, BadRequestException
+from app.exceptions.exceptions import NotFoundException, BadRequestException, ForbiddenException
 from app.enums.download_status import DownloadStatus
 from app.enums.track_status import TrackStatus
+from app.downloads.models import DownloadJob
 from app.downloads.repository import DownloadJobRepository
 from app.playlists.repository import PlaylistRepository
 
@@ -43,18 +44,22 @@ class DownloadJobService:
 
     def find_all(
             self,
+            user_id: UUID,
             status: DownloadStatus | None = None,
     ):
-        return self.repository.find_all(status)
+        return self.repository.find_all(user_id, status)
 
     def find_by_id(
             self,
-            job_id: UUID
+            job_id: UUID,
+            user_id: UUID
     ):
         job = self.repository.find_by_id(job_id)
 
         if not job:
             raise NotFoundException("Download job not found")
+
+        self._verify_ownership(job, user_id)
 
         return job
 
@@ -102,3 +107,11 @@ class DownloadJobService:
 
         self.repository.update_status(job_id, DownloadStatus.CANCELED)
         return self.find_by_id(job_id)
+
+    @staticmethod
+    def _verify_ownership(
+            job: DownloadJob,
+            user_id: UUID
+    ) -> None:
+        if job.user_id != user_id:
+            raise ForbiddenException("You don't have permission to perform this action")

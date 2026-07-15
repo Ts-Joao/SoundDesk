@@ -2,7 +2,7 @@ import zipfile
 from pathlib import Path
 from uuid import UUID
 
-from app.exceptions.exceptions import BadRequestException
+from app.exceptions.exceptions import BadRequestException, ForbiddenException, NotFoundException
 from app.enums.export_status import ExportStatus
 from app.enums.track_status import TrackStatus
 from app.playlists.models import Playlist
@@ -28,8 +28,9 @@ class ExportJobService:
     def create(
             self,
             playlist_id: UUID,
+            user_id: UUID,
     ):
-        job = self.repository.create(playlist_id)
+        job = self.repository.create(playlist_id, user_id)
 
         process_export.delay(
             str(job.id),
@@ -38,11 +39,25 @@ class ExportJobService:
 
         return job
 
-    def find_all(self):
-        return self.repository.find_all()
+    def find_all(
+            self,
+            user_id: UUID,
+    ):
+        return self.repository.find_all(user_id)
 
-    def find_by_id(self, job_id: UUID) -> ExportJob:
-        return self.repository.find_by_id(job_id)
+    def find_by_id(
+            self,
+            job_id: UUID,
+            user_id: UUID,
+    ) -> ExportJob:
+        job = self.repository.find_by_id(job_id)
+
+        if not job:
+            raise NotFoundException("Job not found")
+
+        self._verify_ownership(job, user_id)
+
+        return job
 
     def download_playlist_zip(self, job_id: UUID) -> ExportJob:
         return self.repository.find_by_id(job_id)
@@ -131,8 +146,9 @@ class ExportJobService:
     def get_zip(
             self,
             job_id: UUID,
+            user_id: UUID,
     ):
-        export_job = self.find_by_id(job_id)
+        export_job = self.find_by_id(job_id, user_id)
 
         if export_job.status != ExportStatus.COMPLETED:
             raise BadRequestException("Zip not available")
@@ -144,8 +160,9 @@ class ExportJobService:
     def delete(
             self,
             job_id: UUID,
+            user_id: UUID,
     ):
-        export_job = self.find_by_id(job_id)
+        export_job = self.find_by_id(job_id, user_id)
 
         self.file_service.delete_zip(export_job.file_path)
         self.repository.delete(job_id)
@@ -153,8 +170,9 @@ class ExportJobService:
     def retry(
             self,
             job_id: UUID,
+            user_id: UUID,
     ):
-        job = self.find_by_id(job_id)
+        job = self.find_by_id(job_id, user_id)
 
         if job.status != ExportStatus.FAILED:
             raise BadRequestException("Only failed jobs can be retried")
@@ -176,8 +194,9 @@ class ExportJobService:
     def cancel(
             self,
             job_id: UUID,
+            user_id: UUID,
     ):
-        job = self.find_by_id(job_id)
+        job = self.find_by_id(job_id, user_id)
 
         if job.status not in [ExportStatus.PENDING, ExportStatus.PROCESSING]:
             raise BadRequestException("Only pending or processing jobs can be canceled")
@@ -188,3 +207,11 @@ class ExportJobService:
 
         self.repository.update_status(job_id, ExportStatus.CANCELED)
         return self.find_by_id(job_id)
+
+    @staticmethod
+    def _verify_ownership(
+            job: ExportJob,
+            user_id: UUID
+    ) -> None:
+        if job.user_id != user_id:
+            raise ForbiddenException("You don't have permission to perform this action")
