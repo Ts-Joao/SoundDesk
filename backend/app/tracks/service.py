@@ -54,13 +54,13 @@ class TrackService:
             return False
 
         refs = self.repository.count_playlist_references(track_id)
-        # Keep a Track while its jobs are retained: DownloadJob is historical data
-        # and has a non-null foreign key to Track.
+
         if refs == 0 and self.repository.count_download_references(track_id) == 0:
             if track.file_path:
                 self.file_service.delete_audio(track.file_path)
             if track.cover_path:
                 self.file_service.delete_cover(track.cover_path)
+
             self.repository.delete(track)
             return True
         return False

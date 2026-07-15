@@ -16,12 +16,15 @@ class UserService:
     def create(self, data: CreateUserSchema):
         if self.repository.find_by_email(data.email):
             raise ConflictException("Email already registered")
+
         if self.repository.find_by_username(data.username):
             raise ConflictException("Username already registered")
+
         user_data = data.model_dump()
         password = user_data.pop("password_hash")
         user_data["password_hash"] = hash_password(password)
         user = self.repository.create(user_data)
+
         return user
 
     def find_all(self):
