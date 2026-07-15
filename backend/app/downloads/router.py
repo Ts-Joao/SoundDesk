@@ -3,7 +3,9 @@ from uuid import UUID
 from fastapi import Depends, APIRouter, Query
 from sqlalchemy.orm import Session
 
+from app.auth.dependencies import get_current_user
 from app.database.dependencies import get_db
+from app.users.models import User
 from app.enums.download_status import DownloadStatus
 from app.downloads.repository import DownloadJobRepository
 from app.playlists.repository import PlaylistRepository
@@ -68,7 +70,8 @@ def cancel_download(
 )
 def find_jobs(
         status: DownloadStatus | None = Query(default=None),
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
     playlist_repository = PlaylistRepository(db)
     download_repository = DownloadJobRepository(db)
@@ -77,7 +80,7 @@ def find_jobs(
         playlist_repository,
     )
 
-    return service.find_all(status)
+    return service.find_all(current_user.id, status)
 
 @router.get(
     "/jobs/{job_id}",
@@ -85,7 +88,8 @@ def find_jobs(
 )
 def find_job_by_id(
         job_id: UUID,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
     playlist_repository = PlaylistRepository(db)
     download_repository = DownloadJobRepository(db)
@@ -94,4 +98,4 @@ def find_job_by_id(
         playlist_repository
     )
 
-    return  service.find_by_id(job_id)
+    return  service.find_by_id(job_id, current_user.id)
