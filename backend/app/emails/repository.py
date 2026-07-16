@@ -21,3 +21,8 @@ class EmailVerificationTokenRepository:
         self.db.commit()
         self.db.refresh(email_token)
         return email_token
+
+    def find_by_hash(self, token_hash: str):
+        return self.db.query(EmailVerificationToken).filter(
+            EmailVerificationToken.token_hash == token_hash
+        ).first()

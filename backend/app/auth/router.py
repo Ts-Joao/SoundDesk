@@ -27,6 +27,17 @@ def register(
 
     return service.register(data)
 
+@router.get(
+    "/verify-email",
+    status_code=200,
+    response_model=UserResponseSchema
+)
+def verify_email(
+        token: str,
+        service: AuthService = Depends(get_auth_service)
+):
+    return service.verify_email(token)
+
 @router.post(
     "/login",
     response_model=LoginResponse

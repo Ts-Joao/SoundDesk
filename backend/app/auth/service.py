@@ -50,6 +50,17 @@ class AuthService:
 
         return user
 
+    def verify_email(self, token):
+        self._is_valid_email_token(token)
+        hashed_token = hash_token(token)
+        db_token = self.email_repository.find_by_hash(hashed_token)
+        self._validate_token(db_token.expires_at)
+
+        if db_token.used_at:
+            raise ConflictException("Token already used")
+
+        return self.user_repository.email_verified(db_token.user_id)
+
     def login(self, data: LoginSchema):
         user = self.user_repository.find_by_email(data.email)
 
@@ -75,10 +86,9 @@ class AuthService:
 
         db_refresh_token = self._find_by_hash(token)
 
-        if db_refresh_token.revoked_at:
-            raise UnauthorizedException("Access denied")
+        self._validate_token(db_refresh_token.expires_at)
 
-        if db_refresh_token.expires_at < datetime.now(UTC).replace(tzinfo=None):
+        if db_refresh_token.revoked_at:
             raise UnauthorizedException("Access denied")
 
         self.repository.revoke(db_refresh_token)
@@ -132,11 +142,7 @@ class AuthService:
 
         self.email_repository.create(data, user.id)
 
-        return {
-            "sub": user.id,
-            "token": token,
-            "expires_at": expires_at,
-        }
+        return token
 
     @staticmethod
     def _is_refresh_token_valid(token: str):
@@ -146,3 +152,17 @@ class AuthService:
             raise ForbiddenException("Access denied")
 
         return payload
+
+    @staticmethod
+    def _is_valid_email_token(token: str):
+        payload = JWTService.decode_token(token)
+
+        if payload["type"] != "verify_email":
+            raise ForbiddenException("Access denied")
+
+        return payload
+
+    @staticmethod
+    def _validate_token(expires_at: datetime):
+        if expires_at < datetime.now(UTC).replace(tzinfo=None):
+            raise UnauthorizedException("Expired token")

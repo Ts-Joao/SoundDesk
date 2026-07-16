@@ -62,7 +62,7 @@ class JWTService:
         return JWTService._create_token(
             user_id,
             role,
-            expires_delta=timedelta(hours=1),
+            expires_delta=timedelta(hours=int(settings.verify_email_expire_hours)),
             token_type="verify_email"
         )
 
