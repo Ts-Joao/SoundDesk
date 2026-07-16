@@ -3,15 +3,17 @@ from datetime import datetime, UTC
 from sqlalchemy.orm import Session
 
 from app.auth.jwt_handler import JWTService
-from app.auth.password import verify_password
+from app.auth.password import verify_password, hash_password
 from app.auth.repository import RefreshTokenRepository
 from app.auth.schemas import LoginSchema
 from app.auth.utils import hash_token
+from app.config.settings import settings
 from app.emails.repository import EmailVerificationTokenRepository
 from app.emails.schemas import EmailVerificationSchema
-from app.exceptions.exceptions import UnauthorizedException, ForbiddenException
+from app.exceptions.exceptions import UnauthorizedException, ForbiddenException, ConflictException
 from app.users.repository import UserRepository
 from app.users.models import User
+from app.users.schemas import CreateUserSchema
 
 
 class AuthService:
@@ -20,6 +22,33 @@ class AuthService:
         self.repository = RefreshTokenRepository(db)
         self.user_repository = UserRepository(db)
         self.email_repository = EmailVerificationTokenRepository(db)
+
+    def register(self, data: CreateUserSchema):
+        from app.workers.tasks import send_verify_email_task
+
+        if self.user_repository.find_by_email(data.email):
+            raise ConflictException("Email already registered")
+
+        if self.user_repository.find_by_username(data.username):
+            raise ConflictException("Username already registered")
+
+        user_data = data.model_dump()
+        password = user_data.pop("password_hash")
+        user_data["password_hash"] = hash_password(password)
+        user = self.user_repository.create(user_data)
+        token = self.create_verify_email_token(user)
+
+        verification_url = (
+            f"{settings.frontend_url}/verify-email?token={token}"
+        )
+
+        send_verify_email_task.delay(
+            user.email,
+            user.username,
+            verification_url
+        )
+
+        return user
 
     def login(self, data: LoginSchema):
         user = self.user_repository.find_by_email(data.email)

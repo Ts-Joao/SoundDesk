@@ -11,19 +11,6 @@ from app.users.service import UserService
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-@router.post(
-    "",
-    response_model=UserResponseSchema,
-)
-def create_user(
-        data: CreateUserSchema,
-        db: Session = Depends(get_db)
-):
-    repository = UserRepository(db)
-    service = UserService(repository)
-
-    return service.create(data)
-
 @router.get(
     "",
     response_model=List[UserResponseSchema],
