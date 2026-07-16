@@ -4,6 +4,7 @@ from uuid import UUID
 import jwt
 
 from app.config.settings import settings
+from app.enums.token_types import AuthTokenType
 from app.enums.user_roles import UserRoles
 
 
@@ -55,15 +56,17 @@ class JWTService:
         )
 
     @staticmethod
-    def create_verify_email_token(
+    def create_auth_token(
             user_id: UUID,
             role: UserRoles,
+            expires_delta: str,
+            type: AuthTokenType
     ) -> tuple[str, datetime]:
         return JWTService._create_token(
             user_id,
             role,
-            expires_delta=timedelta(hours=int(settings.verify_email_expire_hours)),
-            token_type="verify_email"
+            expires_delta=timedelta(hours=int(expires_delta)),
+            token_type=type.value
         )
 
     @staticmethod

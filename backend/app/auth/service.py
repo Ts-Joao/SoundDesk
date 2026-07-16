@@ -60,6 +60,8 @@ class AuthService:
         if db_token.used_at:
             raise ConflictException("Token already used")
 
+        self.auth_token_repository.mark_as_used(db_token.id)
+
         return self.user_repository.email_verified(db_token.user_id)
 
     def login(self, data: LoginSchema):
@@ -81,6 +83,22 @@ class AuthService:
             "refresh_token": tokens["refresh_token"],
             "token_type": "Bearer",
         }
+
+    def forgot_password(self, email: str):
+        from app.workers.tasks import send_reset_password_email_task
+
+        user = self.user_repository.find_by_email(email)
+        token = self.create_reset_password_token(user)
+        verification_url = (
+            f"{settings.frontend_url}/forgot-password?token={token}"
+        )
+
+        send_reset_password_email_task.delay(
+            user.email,
+            user.name,
+            verification_url,
+            token
+        )
 
     def refresh(self, token: str):
         self._is_refresh_token_valid(token)
@@ -138,7 +156,12 @@ class AuthService:
         return refresh_token
 
     def create_verify_email_token(self, user: User):
-        token, expires_at = JWTService.create_verify_email_token(user.id, user.role)
+        token, expires_at = JWTService.create_auth_token(
+            user.id,
+            user.role,
+            settings.verify_email_expire_minutes,
+            AuthTokenType.VERIFY_EMAIL
+        )
         data = AuthTokenCreateSchema(
             token_hash=hash_token(token),
             expires_at=expires_at,
@@ -146,7 +169,22 @@ class AuthService:
         )
 
         self.auth_token_repository.create(data, user.id)
+        return token
 
+    def create_reset_password_token(self, user: User):
+        token, expires_at = JWTService.create_auth_token(
+            user.id,
+            user.role,
+            settings.forgot_password_expire_minutes,
+            type=AuthTokenType.RESET_PASSWORD
+        )
+        data = AuthTokenCreateSchema(
+            token_hash=hash_token(token),
+            expires_at=expires_at,
+            type=AuthTokenType.RESET_PASSWORD
+        )
+
+        self.auth_token_repository.create(data, user.id)
         return token
 
     @staticmethod

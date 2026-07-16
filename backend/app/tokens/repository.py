@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -26,3 +27,10 @@ class AuthTokenRepository:
         return self.db.query(AuthToken).filter(
             AuthToken.token_hash == token_hash
         ).first()
+
+    def mark_as_used(self, id: UUID):
+        token = self.db.query(AuthToken).filter(AuthToken.id == id).first()
+        token.used_at = datetime.now()
+        self.db.commit()
+        self.db.refresh(token)
+        return token
