@@ -10,6 +10,7 @@ from app.downloads.models import DownloadJob
 from app.exports.models import ExportJob
 from app.users.models import User
 from app.auth.models import RefreshToken
+from app.emails.models import EmailVerificationToken
 
 from app.database.config import DATABASE_URL
 
