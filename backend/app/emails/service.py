@@ -3,7 +3,7 @@ from pathlib import Path
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 
 from app.config.settings import settings
-from app.emails.schemas import WelcomeEmailSchema
+from app.emails.schemas import WelcomeEmailSchema, VerifyEmailSchema
 
 
 class EmailService:
@@ -24,8 +24,6 @@ class EmailService:
 
         self.fastmail = FastMail(self.config)
 
-
-
     async def send_email(self, data: WelcomeEmailSchema):
         message = MessageSchema(
             subject="Bem-vindo ao SoundDesk!",
@@ -34,3 +32,13 @@ class EmailService:
             subtype=MessageType.html
         )
         await self.fastmail.send_message(message, template_name="welcome.html")
+
+    async def verify_email(self, data: VerifyEmailSchema):
+        subject = f"Falta apenas um passo para ativares a tua conta, {data.username}!"
+        message = MessageSchema(
+            subject=subject,
+            recipients=[data.email_to],     # type: ignore
+            template_body=data.model_dump(),
+            subtype=MessageType.html
+        )
+        await self.fastmail.send_message(message, template_name="verify_email.html")

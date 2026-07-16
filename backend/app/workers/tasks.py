@@ -76,3 +76,21 @@ def send_welcome_email_task(email_to: str, username: str):
 
     email_service = EmailService()
     asyncio.run(email_service.send_email(data))
+
+@celery_app.task(name="send_verify_email_task")
+def send_verify_email_task(
+        email_to: str,
+        username: str,
+        url: str
+):
+    from app.emails.service import EmailService
+    from app.emails.schemas import VerifyEmailSchema
+
+    data = VerifyEmailSchema(
+        email_to=email_to,
+        username=username,
+        verification_url=url
+    )
+
+    email_service = EmailService()
+    asyncio.run(email_service.verify_email(data))
