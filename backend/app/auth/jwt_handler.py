@@ -55,6 +55,18 @@ class JWTService:
         )
 
     @staticmethod
+    def create_verify_email_token(
+            user_id: UUID,
+            role: UserRoles,
+    ) -> tuple[str, datetime]:
+        return JWTService._create_token(
+            user_id,
+            role,
+            expires_delta=timedelta(hours=1),
+            token_type="verify_email"
+        )
+
+    @staticmethod
     def decode_token(
             token: str,
     ) -> dict:

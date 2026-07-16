@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy.orm import Session
 
@@ -6,7 +6,9 @@ from app.auth.jwt_handler import JWTService
 from app.auth.password import verify_password
 from app.auth.repository import RefreshTokenRepository
 from app.auth.schemas import LoginSchema
-from app.auth.utils import hash_refresh_token
+from app.auth.utils import hash_token
+from app.emails.repository import EmailVerificationTokenRepository
+from app.emails.schemas import EmailVerificationSchema
 from app.exceptions.exceptions import UnauthorizedException, ForbiddenException
 from app.users.repository import UserRepository
 from app.users.models import User
@@ -17,6 +19,7 @@ class AuthService:
         self.db = db
         self.repository = RefreshTokenRepository(db)
         self.user_repository = UserRepository(db)
+        self.email_repository = EmailVerificationTokenRepository(db)
 
     def login(self, data: LoginSchema):
         user = self.user_repository.find_by_email(data.email)
@@ -46,7 +49,6 @@ class AuthService:
         if db_refresh_token.revoked_at:
             raise UnauthorizedException("Access denied")
 
-        # expires_at is currently stored as SQL TIMESTAMP (without timezone).
         if db_refresh_token.expires_at < datetime.now(UTC).replace(tzinfo=None):
             raise UnauthorizedException("Access denied")
 
@@ -76,7 +78,7 @@ class AuthService:
 
         self.repository.create(
             user.id,
-            hash_refresh_token(token),
+            hash_token(token),
             expires_at
         )
 
@@ -87,13 +89,25 @@ class AuthService:
         }
 
     def _find_by_hash(self, token: str):
-        token_hash = hash_refresh_token(token)
+        token_hash = hash_token(token)
         refresh_token = self.repository.find_by_hash(token_hash)
 
         if not refresh_token:
             raise UnauthorizedException("Invalid credentials")
 
         return refresh_token
+
+    def create_verify_email_token(self, user: User):
+        token, expires_at = JWTService.create_verify_email_token(user.id, user.role)
+        data = EmailVerificationSchema(token_hash=hash_token(token), expires_at=expires_at)
+
+        self.email_repository.create(data, user.id)
+
+        return {
+            "sub": user.id,
+            "token": token,
+            "expires_at": expires_at,
+        }
 
     @staticmethod
     def _is_refresh_token_valid(token: str):

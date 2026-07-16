@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from app.auth.password import hash_password, verify_password
+from app.auth.service import AuthService
 from app.exceptions.exceptions import ConflictException, NotFoundException, BadRequestException
 from app.users.repository import UserRepository
 from app.users.schemas import CreateUserSchema, UpdateUserSchema, ChangePasswordSchema
@@ -9,13 +10,13 @@ from app.users.schemas import CreateUserSchema, UpdateUserSchema, ChangePassword
 class UserService:
     def __init__(
             self,
-            repository: UserRepository
+            repository: UserRepository,
+            auth_service: AuthService
     ):
         self.repository = repository
+        self.auth_service = auth_service
 
     def create(self, data: CreateUserSchema):
-        from app.workers.tasks import send_welcome_email_task
-
         if self.repository.find_by_email(data.email):
             raise ConflictException("Email already registered")
 
@@ -26,7 +27,7 @@ class UserService:
         password = user_data.pop("password_hash")
         user_data["password_hash"] = hash_password(password)
         user = self.repository.create(user_data)
-        send_welcome_email_task.delay(data.email, data.username)
+        self.auth_service.create_verify_email_token(user)
 
         return user
 
