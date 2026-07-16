@@ -12,3 +12,5 @@ pwdlib[argon2]>=0.2.0
 argon2-cffi>=23.1.0
 email-validator>=2.0.0
 pyjwt==2.10.*
+FastAPI-Mail
+pydantic-settings

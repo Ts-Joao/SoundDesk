@@ -1,7 +1,10 @@
 from uuid import UUID
 
+import asyncio
+
 from app.database.session import SessionLocal
 from app.downloads.repository import DownloadJobRepository
+from app.emails.schemas import WelcomeEmailSchema
 from app.exports.repository import ExportJobRepository
 from app.playlists.repository import PlaylistRepository
 from app.tracks.repository import TrackRepository
@@ -63,3 +66,13 @@ def process_export(
         )
     finally:
         db.close()
+
+@celery_app.task(name="send_welcome_email_task")
+def send_welcome_email_task(email_to: str, username: str):
+    from app.emails.service import EmailService
+    from app.emails.schemas import WelcomeEmailSchema
+
+    data = WelcomeEmailSchema(email_to=email_to, username=username)
+
+    email_service = EmailService()
+    asyncio.run(email_service.send_email(data))

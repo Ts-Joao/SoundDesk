@@ -14,6 +14,8 @@ class UserService:
         self.repository = repository
 
     def create(self, data: CreateUserSchema):
+        from app.workers.tasks import send_welcome_email_task
+
         if self.repository.find_by_email(data.email):
             raise ConflictException("Email already registered")
 
@@ -24,6 +26,7 @@ class UserService:
         password = user_data.pop("password_hash")
         user_data["password_hash"] = hash_password(password)
         user = self.repository.create(user_data)
+        send_welcome_email_task.delay(data.email, data.username)
 
         return user
 
