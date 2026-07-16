@@ -3,7 +3,7 @@ from uuid import UUID
 
 import jwt
 
-from app.config.settings import ALGORITHM, SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
+from app.config.settings import settings
 from app.enums.user_roles import UserRoles
 
 
@@ -25,7 +25,7 @@ class JWTService:
             "exp": expire,
         }
 
-        token = str(jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM))
+        token = str(jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm))
 
         return token, expire
 
@@ -37,7 +37,7 @@ class JWTService:
         token, _ = JWTService._create_token(
             user_id,
             role,
-            expires_delta=timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES)),
+            expires_delta=timedelta(minutes=int(settings.access_token_expire_minutes)),
             token_type="access"
         )
         return token
@@ -50,7 +50,7 @@ class JWTService:
         return JWTService._create_token(
             user_id,
             role,
-            expires_delta=timedelta(days=int(REFRESH_TOKEN_EXPIRE_DAYS)),
+            expires_delta=timedelta(days=int(settings.refresh_token_expire_days)),
             token_type="refresh"
         )
 
@@ -72,6 +72,6 @@ class JWTService:
     ) -> dict:
         return jwt.decode(
             token,
-            SECRET_KEY,
-            algorithms=[ALGORITHM],
+            settings.jwt_secret,
+            algorithms=[settings.jwt_algorithm],
         )

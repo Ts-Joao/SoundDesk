@@ -1,28 +1,44 @@
-from dotenv import load_dotenv
+from functools import lru_cache
 
-import os
-
-from pydantic import EmailStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv()
+class Settings(BaseSettings):
+    # API
+    app_name: str = "SoundDesk"
+    debug: bool = False
 
-SECRET_KEY=os.getenv("SECRET_KEY")
-ALGORITHM=os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES=os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
-REFRESH_TOKEN_EXPIRE_DAYS=os.getenv("REFRESH_TOKEN_EXPIRE_DAYS")
+    # Frontend
+    frontend_url: str
 
-class MailSettings(BaseSettings):
-    MAIL_USERNAME: EmailStr = os.getenv("MAIL_USERNAME", "seu_email_de_teste@gmail.com")
-    MAIL_PASSWORD: str = os.getenv("MAIL_PASSWORD")
-    MAIL_FROM: str = os.getenv("MAIL_FROM")
-    MAIL_FROM_NAME: str = os.getenv("MAIL_FROM_NAME")
-    MAIL_SERVER: str = os.getenv("MAIL_SERVER")
-    MAIL_PORT: int = os.getenv("MAIL_PORT")
-    MAIL_STARTTLS: bool = os.getenv("MAIL_STARTTLS")
-    MAIL_SSL_TLS: bool = os.getenv("MAIL_SSL_TLS")
+    # JWT
+    jwt_secret: str
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 15
+    refresh_token_expire_days: int = 7
+    verify_email_expire_hours: int = 24
+    reset_password_expire_minutes: int = 30
 
-    model_config = SettingsConfigDict(env_file='.env', extra='ignore')
+    # Email
+    mail_username: str
+    mail_password: str
+    mail_from: str
+    mail_from_name: str = "SoundDesk"
+
+    mail_server: str
+    mail_port: int
+
+    mail_starttls: bool = True
+    mail_ssl_tls: bool = False
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore"
+    )
 
 
-settings = MailSettings()
+@lru_cache
+def get_settings():
+    return Settings()
+
+
+settings = get_settings()
