@@ -8,8 +8,9 @@ from app.auth.repository import RefreshTokenRepository
 from app.auth.schemas import LoginSchema
 from app.auth.utils import hash_token
 from app.config.settings import settings
-from app.emails.repository import EmailVerificationTokenRepository
-from app.emails.schemas import EmailVerificationSchema
+from app.enums.token_types import AuthTokenType
+from app.tokens.repository import AuthTokenRepository
+from app.tokens.schemas import AuthTokenCreateSchema
 from app.exceptions.exceptions import UnauthorizedException, ForbiddenException, ConflictException
 from app.users.repository import UserRepository
 from app.users.models import User
@@ -21,7 +22,7 @@ class AuthService:
         self.db = db
         self.repository = RefreshTokenRepository(db)
         self.user_repository = UserRepository(db)
-        self.email_repository = EmailVerificationTokenRepository(db)
+        self.auth_token_repository = AuthTokenRepository(db)
 
     def register(self, data: CreateUserSchema):
         from app.workers.tasks import send_verify_email_task
@@ -53,7 +54,7 @@ class AuthService:
     def verify_email(self, token):
         self._is_valid_email_token(token)
         hashed_token = hash_token(token)
-        db_token = self.email_repository.find_by_hash(hashed_token)
+        db_token = self.auth_token_repository.find_by_hash(hashed_token)
         self._validate_token(db_token.expires_at)
 
         if db_token.used_at:
@@ -138,9 +139,13 @@ class AuthService:
 
     def create_verify_email_token(self, user: User):
         token, expires_at = JWTService.create_verify_email_token(user.id, user.role)
-        data = EmailVerificationSchema(token_hash=hash_token(token), expires_at=expires_at)
+        data = AuthTokenCreateSchema(
+            token_hash=hash_token(token),
+            expires_at=expires_at,
+            type=AuthTokenType.VERIFY_EMAIL
+        )
 
-        self.email_repository.create(data, user.id)
+        self.auth_token_repository.create(data, user.id)
 
         return token
 

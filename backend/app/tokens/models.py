@@ -2,17 +2,17 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Text, TIMESTAMP, ForeignKey
+from sqlalchemy import Text, TIMESTAMP, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin
-
+from app.enums.token_types import AuthTokenType
 
 if TYPE_CHECKING:
     from app.users.models import User
 
-class EmailVerificationToken(Base, TimestampMixin):
-    __tablename__ = "email_verification_tokens"
+class AuthToken(Base, TimestampMixin):
+    __tablename__ = "auth_tokens"
 
     user_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -21,7 +21,12 @@ class EmailVerificationToken(Base, TimestampMixin):
 
     user: Mapped["User"] = relationship(
         "User",
-        back_populates="email_verification_tokens"
+        back_populates="auth_tokens"
+    )
+
+    type: Mapped[AuthTokenType] = mapped_column(
+        Enum(AuthTokenType),
+        nullable=False
     )
 
     token_hash: Mapped[str] = mapped_column(

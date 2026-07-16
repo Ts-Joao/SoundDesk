@@ -57,8 +57,8 @@ class User(Base, TimestampMixin):
         default=True,
     )
 
-    email_verification_tokens = relationship(
-        "EmailVerificationToken",
+    auth_tokens = relationship(
+        "AuthToken",
         back_populates="user",
         cascade="all, delete-orphan"
     )

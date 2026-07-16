@@ -1,11 +1,5 @@
-from datetime import datetime
-
 from pydantic import BaseModel
 
-
-class EmailVerificationSchema(BaseModel):
-    token_hash: str
-    expires_at: datetime
 
 class EmailBaseSchema(BaseModel):
     email_to: str
