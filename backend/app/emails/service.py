@@ -11,14 +11,14 @@ class EmailService:
         template_path = Path(__file__).resolve().parent / "templates"
 
         self.config = ConnectionConfig(
-            MAIL_USERNAME=settings.MAIL_USERNAME,
-            MAIL_PASSWORD=settings.MAIL_PASSWORD,
-            MAIL_FROM=settings.MAIL_FROM,
-            MAIL_PORT=settings.MAIL_PORT,
-            MAIL_SERVER=settings.MAIL_SERVER,
-            MAIL_FROM_NAME=settings.MAIL_FROM_NAME,
-            MAIL_STARTTLS=settings.MAIL_STARTTLS,
-            MAIL_SSL_TLS=settings.MAIL_SSL_TLS,
+            MAIL_USERNAME=settings.mail_username,
+            MAIL_PASSWORD=settings.mail_password,
+            MAIL_FROM=settings.mail_from,
+            MAIL_PORT=settings.mail_port,
+            MAIL_SERVER=settings.mail_server,
+            MAIL_FROM_NAME=settings.mail_from_name,
+            MAIL_STARTTLS=settings.mail_starttls,
+            MAIL_SSL_TLS=settings.mail_ssl_tls,
             TEMPLATE_FOLDER=template_path,
         )
 
