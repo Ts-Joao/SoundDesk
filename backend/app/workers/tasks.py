@@ -94,3 +94,23 @@ def send_verify_email_task(
 
     email_service = EmailService()
     asyncio.run(email_service.verify_email(data))
+
+@celery_app.task(name="send_reset_password_email_task")
+def send_reset_password_email_task(
+        email_to: str,
+        username: str,
+        url,
+        token
+):
+    from app.emails.service import EmailService
+    from app.emails.schemas import ResetPasswordEmailSchema
+
+    data = ResetPasswordEmailSchema(
+        email_to=email_to,
+        username=username,
+        reset_password_url=url,
+        token=token
+    )
+
+    email_service = EmailService()
+    asyncio.run(email_service.reset_password(data))

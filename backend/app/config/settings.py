@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
-    verify_email_expire_hours: int = 24
+    verify_email_expire_minutes: int = 60
     reset_password_expire_minutes: int = 30
 
     # Email
