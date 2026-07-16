@@ -6,7 +6,7 @@ class EmailBaseSchema(BaseModel):
     username: str
 
 class WelcomeEmailSchema(EmailBaseSchema):
-    pass
+    frontend_url: str
 
 class VerifyEmailSchema(EmailBaseSchema):
     verification_url: str
@@ -14,3 +14,6 @@ class VerifyEmailSchema(EmailBaseSchema):
 class ResetPasswordEmailSchema(EmailBaseSchema):
     token: str
     reset_password_url: str
+
+class PasswordChangedEmailSchema(EmailBaseSchema):
+    pass

@@ -51,8 +51,8 @@ class AuthService:
 
         return user
 
-    def verify_email(self, token):
-        self._is_valid_email_token(token)
+    def verify_email(self, token: str):
+        self._is_valid_auth_token(token, AuthTokenType.VERIFY_EMAIL)
         hashed_token = hash_token(token)
         db_token = self.auth_token_repository.find_by_hash(hashed_token)
         self._validate_token(db_token.expires_at)
@@ -98,6 +98,27 @@ class AuthService:
             user.name,
             verification_url,
             token
+        )
+
+    def reset_password(self, token: str, new_password: str):
+        from app.workers.tasks import send_password_change_email_task
+
+        self._is_valid_auth_token(token, AuthTokenType.RESET_PASSWORD)
+        hashed_token = hash_token(token)
+        db_token = self.auth_token_repository.find_by_hash(hashed_token)
+        self._validate_token(db_token.expires_at)
+
+        if db_token.used_at:
+            raise ConflictException("Token already used")
+
+        self.user_repository.reset_password(db_token.user_id, hash_password(new_password))
+        self.auth_token_repository.mark_as_used(db_token.id)
+        self.repository.revoke_all(db_token.user_id)
+        user = self.user_repository.find_by_id(db_token.user_id)
+
+        send_password_change_email_task.delay(
+            user.email,
+            user.username,
         )
 
     def refresh(self, token: str):
@@ -197,10 +218,10 @@ class AuthService:
         return payload
 
     @staticmethod
-    def _is_valid_email_token(token: str):
+    def _is_valid_auth_token(token: str, type: AuthTokenType):
         payload = JWTService.decode_token(token)
 
-        if payload["type"] != "verify_email":
+        if payload["type"] != type:
             raise ForbiddenException("Access denied")
 
         return payload

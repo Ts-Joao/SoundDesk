@@ -65,6 +65,20 @@ def forgot_password(
     return service.forgot_password(email)
 
 @router.post(
+    "/reset-password",
+    responses= {
+        204: {
+            "description": "Password reset successful"
+        }
+    }
+)
+def reset_password(
+        token: str,
+        service: AuthService = Depends(get_auth_service)
+):
+    return service.reset_password(token)
+
+@router.post(
     "/refresh",
     response_model=RefreshResponse
 )

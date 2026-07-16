@@ -3,8 +3,12 @@ from pathlib import Path
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 
 from app.config.settings import settings
-from app.emails.schemas import WelcomeEmailSchema, VerifyEmailSchema, ResetPasswordEmailSchema
-
+from app.emails.schemas import (
+    WelcomeEmailSchema,
+    VerifyEmailSchema,
+    ResetPasswordEmailSchema,
+    PasswordChangedEmailSchema
+)
 
 class EmailService:
     def __init__(self):
@@ -51,3 +55,12 @@ class EmailService:
             subtype=MessageType.html
         )
         await self.fastmail.send_message(message, template_name="reset_password.html")
+
+    async def password_changed(self, data: PasswordChangedEmailSchema):
+        message = MessageSchema(
+            subject="🔒 A sua senha do SoundDesk foi redefinida com sucesso",
+            recipients=[data.email_to],     # type: ignore
+            template_body=data.model_dump(),
+            subtype=MessageType.html
+        )
+        await self.fastmail.send_message(message, template_name="password_changed.html")

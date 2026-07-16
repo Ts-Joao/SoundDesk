@@ -2,9 +2,9 @@ from uuid import UUID
 
 import asyncio
 
+from app.config.settings import settings
 from app.database.session import SessionLocal
 from app.downloads.repository import DownloadJobRepository
-from app.emails.schemas import WelcomeEmailSchema
 from app.exports.repository import ExportJobRepository
 from app.playlists.repository import PlaylistRepository
 from app.tracks.repository import TrackRepository
@@ -72,7 +72,11 @@ def send_welcome_email_task(email_to: str, username: str):
     from app.emails.service import EmailService
     from app.emails.schemas import WelcomeEmailSchema
 
-    data = WelcomeEmailSchema(email_to=email_to, username=username)
+    data = WelcomeEmailSchema(
+        email_to=email_to,
+        username=username,
+        frontend_url=settings.FRONTEND_URL + "/login"
+    )
 
     email_service = EmailService()
     asyncio.run(email_service.send_email(data))
@@ -114,3 +118,19 @@ def send_reset_password_email_task(
 
     email_service = EmailService()
     asyncio.run(email_service.reset_password(data))
+
+@celery_app.task(name="send_password_change_email_task")
+def send_password_change_email_task(
+        email_to: str,
+        username: str,
+):
+    from app.emails.service import EmailService
+    from app.emails.schemas import PasswordChangedEmailSchema
+
+    data = PasswordChangedEmailSchema(
+        email_to=email_to,
+        username=username,
+    )
+
+    email_service = EmailService()
+    asyncio.run(email_service.password_changed(data))
