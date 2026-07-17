@@ -62,6 +62,7 @@ export interface LibraryStats {
   pendingDownloads: number;
   storageUsedMb: number;
   storageCapacityMb: number;
+  totalExports?: number;
 }
 
 export interface AppSettings {

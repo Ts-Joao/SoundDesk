@@ -63,3 +63,13 @@ class DownloadJob(Base, TimestampMixin):
         TIMESTAMP,
         nullable=True
     )
+
+    @property
+    def track_name(self) -> str:
+        return self.track.title if self.track else "Sem Faixa"
+
+    @property
+    def playlist_name(self) -> str:
+        if self.track and self.track.playlists:
+            return self.track.playlists[0].name
+        return "Sem Playlist"

@@ -1,0 +1,1 @@
+export { SharedView } from "./ExtraViews";

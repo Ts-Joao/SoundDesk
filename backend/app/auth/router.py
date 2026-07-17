@@ -2,7 +2,15 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_active_user
-from app.auth.schemas import LoginResponse, RefreshResponse, LoginSchema, LogoutSchema, RefreshRequest
+from app.auth.schemas import (
+    LoginResponse,
+    RefreshResponse,
+    LoginSchema,
+    LogoutSchema,
+    RefreshRequest,
+    ForgotPasswordSchema,
+    ResetPasswordSchema,
+)
 from app.auth.service import AuthService
 from app.database.dependencies import get_db
 from app.users.schemas import UserResponseSchema, CreateUserSchema
@@ -52,41 +60,33 @@ def login(
 
 @router.post(
     "/forgot-password",
-    responses= {
-        204: {
-            "description": "Password reset email sent"
-        }
-    }
+    status_code=204,
 )
 def forgot_password(
-        email: str,
+        data: ForgotPasswordSchema,
         service: AuthService = Depends(get_auth_service)
 ):
-    return service.forgot_password(email)
+    service.forgot_password(data.email)
 
 @router.post(
     "/reset-password",
-    responses= {
-        204: {
-            "description": "Password reset successful"
-        }
-    }
+    status_code=204,
 )
 def reset_password(
-        token: str,
+        data: ResetPasswordSchema,
         service: AuthService = Depends(get_auth_service)
 ):
-    return service.reset_password(token)
+    service.reset_password(data.token, data.password)
 
 @router.post(
     "/refresh",
     response_model=RefreshResponse
 )
 def refresh(
-        token: str,
+        data: RefreshRequest,
         service: AuthService = Depends(get_auth_service)
 ):
-    return service.refresh(token)
+    return service.refresh(data.refresh_token)
 
 @router.get(
     "/me",

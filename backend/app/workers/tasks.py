@@ -112,7 +112,7 @@ def send_reset_password_email_task(
     data = ResetPasswordEmailSchema(
         email_to=email_to,
         username=username,
-        reset_password_url=url,
+        reset_url=url,
         token=token
     )
 

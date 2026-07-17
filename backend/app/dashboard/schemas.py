@@ -31,13 +31,21 @@ class RecentTrackSchema(BaseModel):
     id: UUID
     title: str
     artist: str
-    cover_path: str
+    cover_path: str | None = None
     duration: int
+
+    model_config = {
+        "from_attributes": True
+    }
 
 class RecentPlaylistSchema(BaseModel):
     id: UUID
     name: str
     color: str
+
+    model_config = {
+        "from_attributes": True
+    }
 
     @field_validator("color")
     @classmethod
@@ -50,11 +58,21 @@ class RecentPlaylistSchema(BaseModel):
 class RecentDownloadSchema(BaseModel):
     id: UUID
     status: DownloadStatus
+    track_name: str | None = None
+    playlist_name: str | None = None
+
+    model_config = {
+        "from_attributes": True
+    }
 
 class RecentExportSchema(BaseModel):
     id: UUID
     playlist: str
     status: ExportStatus
+
+    model_config = {
+        "from_attributes": True
+    }
 
 class DashboardResponse(BaseModel):
     stats: DashboardStatsSchema

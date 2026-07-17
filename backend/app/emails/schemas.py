@@ -13,7 +13,7 @@ class VerifyEmailSchema(EmailBaseSchema):
 
 class ResetPasswordEmailSchema(EmailBaseSchema):
     token: str
-    reset_password_url: str
+    reset_url: str
 
 class PasswordChangedEmailSchema(EmailBaseSchema):
     pass

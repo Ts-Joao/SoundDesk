@@ -76,6 +76,9 @@ class AuthService:
         if not user.is_active:
             raise ForbiddenException("Account disabled")
 
+        if not user.email_verified:
+            raise ForbiddenException("Por favor, verifique seu e-mail antes de fazer login.")
+
         tokens = self._generate_tokens(user)
 
         return {
@@ -89,14 +92,14 @@ class AuthService:
 
         user = self.user_repository.find_by_email(email)
         token = self.create_reset_password_token(user)
-        verification_url = (
-            f"{settings.frontend_url}/forgot-password?token={token}"
+        reset_url = (
+            f"{settings.frontend_url}/reset-password?token={token}"
         )
 
         send_reset_password_email_task.delay(
             user.email,
-            user.name,
-            verification_url,
+            user.username,
+            reset_url,
             token
         )
 
@@ -196,7 +199,7 @@ class AuthService:
         token, expires_at = JWTService.create_auth_token(
             user.id,
             user.role,
-            settings.forgot_password_expire_minutes,
+            settings.reset_password_expire_minutes,
             type=AuthTokenType.RESET_PASSWORD
         )
         data = AuthTokenCreateSchema(
@@ -220,8 +223,9 @@ class AuthService:
     @staticmethod
     def _is_valid_auth_token(token: str, type: AuthTokenType):
         payload = JWTService.decode_token(token)
+        expected_type = type.value if hasattr(type, "value") else type
 
-        if payload["type"] != type:
+        if payload["type"] != expected_type:
             raise ForbiddenException("Access denied")
 
         return payload

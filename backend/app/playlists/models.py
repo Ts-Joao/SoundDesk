@@ -44,6 +44,26 @@ class Playlist(Base, TimestampMixin):
         back_populates="playlists",
     )
 
+    @property
+    def track_count(self) -> int:
+        return len(self.tracks)
+
+    @property
+    def completed_tracks(self) -> int:
+        from app.enums.track_status import TrackStatus
+        return sum(1 for t in self.tracks if t.status == TrackStatus.READY)
+
+    @property
+    def failed_tracks(self) -> int:
+        from app.enums.track_status import TrackStatus
+        return sum(1 for t in self.tracks if t.status in (TrackStatus.FAILED, TrackStatus.CANCELED))
+
+    @property
+    def pending_tracks(self) -> int:
+        from app.enums.track_status import TrackStatus
+        return sum(1 for t in self.tracks if t.status in (TrackStatus.PENDING, TrackStatus.PROCESSING))
+
+
 
 class PlaylistTrack(Base, TimestampMixin):
     __tablename__ = "playlist_tracks"

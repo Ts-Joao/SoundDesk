@@ -38,7 +38,9 @@ class PlaylistTrackService:
         if relation:
             raise ConflictException("Track already exists in playlist")
 
-        return self.repository.create(playlist_id, track_id)
+        self.repository.create(playlist_id, track_id)
+        playlist = self.playlist_repository.find_by_id(playlist_id)
+        return playlist
 
     def find_tracks(
             self,

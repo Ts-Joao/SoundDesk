@@ -17,7 +17,8 @@ from app.playlists.track_service import PlaylistTrackService
 router = APIRouter(prefix="/playlist-tracks", tags=["Playlist Tracks"])
 
 @router.post(
-    "/{playlist_id}/tracks/{track_id}"
+    "/{playlist_id}/tracks/{track_id}",
+    response_model=PlaylistResponseSchema,
 )
 def add_track(
         playlist_id: UUID,
