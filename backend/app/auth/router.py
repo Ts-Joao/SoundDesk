@@ -13,14 +13,14 @@ from app.auth.schemas import (
 )
 from app.auth.service import AuthService
 from app.database.dependencies import get_db
-from app.users.schemas import UserResponseSchema, CreateUserSchema
+from app.users.schemas import UserResponseSchema, CreateUserSchema, ChangePasswordSchema
 from app.users.models import User
+
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
     return AuthService(db)
-
 
 @router.post(
     "/register",
@@ -35,17 +35,6 @@ def register(
 
     return service.register(data)
 
-@router.get(
-    "/verify-email",
-    status_code=200,
-    response_model=UserResponseSchema
-)
-def verify_email(
-        token: str,
-        service: AuthService = Depends(get_auth_service)
-):
-    return service.verify_email(token)
-
 @router.post(
     "/login",
     response_model=LoginResponse
@@ -57,6 +46,37 @@ def login(
     service = AuthService(db)
 
     return service.login(data)
+
+@router.post(
+    "/logout",
+    status_code=204
+)
+def logout(
+        data: LogoutSchema,
+        service: AuthService = Depends(get_auth_service)
+):
+    return service.logout(data.refresh_token)
+
+@router.post(
+    "/refresh",
+    response_model=RefreshResponse
+)
+def refresh(
+        data: RefreshRequest,
+        service: AuthService = Depends(get_auth_service)
+):
+    return service.refresh(data.refresh_token)
+
+@router.post(
+    "/verify-email",
+    status_code=200,
+    response_model=UserResponseSchema
+)
+def verify_email(
+        token: str,
+        service: AuthService = Depends(get_auth_service)
+):
+    return service.verify_email(token)
 
 @router.post(
     "/forgot-password",
@@ -78,31 +98,13 @@ def reset_password(
 ):
     service.reset_password(data.token, data.password)
 
-@router.post(
-    "/refresh",
-    response_model=RefreshResponse
+@router.patch(
+    "/change-password",
+    status_code=200,
 )
-def refresh(
-        data: RefreshRequest,
+def change_password(
+        data: ChangePasswordSchema,
+        current_user: User = Depends(get_current_active_user),
         service: AuthService = Depends(get_auth_service)
 ):
-    return service.refresh(data.refresh_token)
-
-@router.get(
-    "/me",
-    response_model=UserResponseSchema
-)
-def me(
-    current_user: User = Depends(get_current_active_user)
-):
-    return current_user
-
-@router.post(
-    "/logout",
-    status_code=204
-)
-def logout(
-        data: LogoutSchema,
-        service: AuthService = Depends(get_auth_service)
-):
-    return service.logout(data.refresh_token)
+    service.change_password(current_user.id, data)

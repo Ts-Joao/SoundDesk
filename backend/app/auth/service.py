@@ -1,4 +1,5 @@
 from datetime import datetime, UTC
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -10,11 +11,11 @@ from app.auth.utils import hash_token
 from app.config.settings import settings
 from app.enums.token_types import AuthTokenType
 from app.tokens.repository import AuthTokenRepository
-from app.exceptions.exceptions import UnauthorizedException, ForbiddenException, ConflictException
+from app.exceptions.exceptions import UnauthorizedException, ForbiddenException, ConflictException, BadRequestException
 from app.tokens.service import AuthTokenService
 from app.users.repository import UserRepository
 from app.users.models import User
-from app.users.schemas import CreateUserSchema
+from app.users.schemas import CreateUserSchema, ChangePasswordSchema
 
 
 class AuthService:
@@ -123,6 +124,27 @@ class AuthService:
             user.username,
             url
         )
+
+    def change_password(self, user_id: UUID, data: ChangePasswordSchema):
+        from app.workers.tasks import send_password_change_email_task
+
+        user = self.user_repository.find_by_id(user_id)
+        password_match = verify_password(data.current_password, user.password_hash)
+
+        if not password_match:
+            raise BadRequestException("Password not match")
+
+        self.user_repository.reset_password(user, password=hash_password(data.new_password))
+        url = (
+            f"{settings.frontend_url}/login"
+        )
+
+        send_password_change_email_task.delay(
+            user.email,
+            user.username,
+            url
+        )
+        return user
 
     def refresh(self, token: str):
         self._is_refresh_token_valid(token)

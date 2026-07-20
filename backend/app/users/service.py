@@ -1,9 +1,8 @@
 from uuid import UUID
 
-from app.auth.password import hash_password, verify_password
-from app.exceptions.exceptions import NotFoundException, BadRequestException
+from app.exceptions.exceptions import NotFoundException
 from app.users.repository import UserRepository
-from app.users.schemas import UpdateUserSchema, ChangePasswordSchema
+from app.users.schemas import UpdateUserSchema
 
 
 class UserService:
@@ -44,16 +43,6 @@ class UserService:
     ):
         user = self.find_by_id(user_id)
         return self.repository.update(user, data)
-
-    def change_password(self, user_id: UUID, data: ChangePasswordSchema):
-        user = self.find_by_id(user_id)
-        password_match = verify_password(data.current_password, user.password_hash)
-
-        if not password_match:
-            raise BadRequestException("Password not match")
-
-        self.repository.reset_password(user, password=hash_password(data.new_password))
-        return user
 
     def deactivate(self, user_id: UUID):
         user = self.find_by_id(user_id)
