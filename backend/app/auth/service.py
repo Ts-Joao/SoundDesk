@@ -10,8 +10,8 @@ from app.auth.utils import hash_token
 from app.config.settings import settings
 from app.enums.token_types import AuthTokenType
 from app.tokens.repository import AuthTokenRepository
-from app.tokens.schemas import AuthTokenCreateSchema
 from app.exceptions.exceptions import UnauthorizedException, ForbiddenException, ConflictException
+from app.tokens.service import AuthTokenService
 from app.users.repository import UserRepository
 from app.users.models import User
 from app.users.schemas import CreateUserSchema
@@ -23,6 +23,7 @@ class AuthService:
         self.repository = RefreshTokenRepository(db)
         self.user_repository = UserRepository(db)
         self.auth_token_repository = AuthTokenRepository(db)
+        self.auth_token_service = AuthTokenService(db)
 
     def register(self, data: CreateUserSchema):
         from app.workers.tasks import send_verify_email_task
@@ -37,7 +38,7 @@ class AuthService:
         password = user_data.pop("password_hash")
         user_data["password_hash"] = hash_password(password)
         user = self.user_repository.create(user_data)
-        token = self.create_verify_email_token(user)
+        token = self.auth_token_service.create(user, AuthTokenType.VERIFY_EMAIL)
 
         verification_url = (
             f"{settings.frontend_url}/verify-email?token={token}"
@@ -52,17 +53,11 @@ class AuthService:
         return user
 
     def verify_email(self, token: str):
-        self._is_valid_auth_token(token, AuthTokenType.VERIFY_EMAIL)
-        hashed_token = hash_token(token)
-        db_token = self.auth_token_repository.find_by_hash(hashed_token)
-        self._validate_token(db_token.expires_at)
+        db_token = self.auth_token_service.validate(token, AuthTokenType.VERIFY_EMAIL)
+        self.auth_token_service.consume(token)
+        self.user_repository.email_verified(db_token.user_id)
 
-        if db_token.used_at:
-            raise ConflictException("Token already used")
-
-        self.auth_token_repository.mark_as_used(db_token.id)
-
-        return self.user_repository.email_verified(db_token.user_id)
+        return db_token.user_id
 
     def login(self, data: LoginSchema):
         user = self.user_repository.find_by_email(data.email)
@@ -91,7 +86,7 @@ class AuthService:
         from app.workers.tasks import send_reset_password_email_task
 
         user = self.user_repository.find_by_email(email)
-        token = self.create_reset_password_token(user)
+        token = self.auth_token_service.create(user, AuthTokenType.RESET_PASSWORD)
         reset_url = (
             f"{settings.frontend_url}/reset-password?token={token}"
         )
@@ -106,16 +101,10 @@ class AuthService:
     def reset_password(self, token: str, new_password: str):
         from app.workers.tasks import send_password_change_email_task
 
-        self._is_valid_auth_token(token, AuthTokenType.RESET_PASSWORD)
-        hashed_token = hash_token(token)
-        db_token = self.auth_token_repository.find_by_hash(hashed_token)
-        self._validate_token(db_token.expires_at)
-
-        if db_token.used_at:
-            raise ConflictException("Token already used")
+        db_token = self.auth_token_service.validate(token, AuthTokenType.RESET_PASSWORD)
 
         self.user_repository.reset_password(db_token.user_id, hash_password(new_password))
-        self.auth_token_repository.mark_as_used(db_token.id)
+        self.auth_token_service.consume(db_token.id)
         self.repository.revoke_all(db_token.user_id)
         user = self.user_repository.find_by_id(db_token.user_id)
 
@@ -179,53 +168,11 @@ class AuthService:
 
         return refresh_token
 
-    def create_verify_email_token(self, user: User):
-        token, expires_at = JWTService.create_auth_token(
-            user.id,
-            user.role,
-            settings.verify_email_expire_minutes,
-            AuthTokenType.VERIFY_EMAIL
-        )
-        data = AuthTokenCreateSchema(
-            token_hash=hash_token(token),
-            expires_at=expires_at,
-            type=AuthTokenType.VERIFY_EMAIL
-        )
-
-        self.auth_token_repository.create(data, user.id)
-        return token
-
-    def create_reset_password_token(self, user: User):
-        token, expires_at = JWTService.create_auth_token(
-            user.id,
-            user.role,
-            settings.reset_password_expire_minutes,
-            type=AuthTokenType.RESET_PASSWORD
-        )
-        data = AuthTokenCreateSchema(
-            token_hash=hash_token(token),
-            expires_at=expires_at,
-            type=AuthTokenType.RESET_PASSWORD
-        )
-
-        self.auth_token_repository.create(data, user.id)
-        return token
-
     @staticmethod
     def _is_refresh_token_valid(token: str):
         payload = JWTService.decode_token(token)
 
         if payload["type"] != "refresh":
-            raise ForbiddenException("Access denied")
-
-        return payload
-
-    @staticmethod
-    def _is_valid_auth_token(token: str, type: AuthTokenType):
-        payload = JWTService.decode_token(token)
-        expected_type = type.value if hasattr(type, "value") else type
-
-        if payload["type"] != expected_type:
             raise ForbiddenException("Access denied")
 
         return payload
