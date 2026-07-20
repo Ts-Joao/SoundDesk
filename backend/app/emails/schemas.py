@@ -4,16 +4,16 @@ from pydantic import BaseModel
 class EmailBaseSchema(BaseModel):
     email_to: str
     username: str
-
-class WelcomeEmailSchema(EmailBaseSchema):
     frontend_url: str
 
+class WelcomeEmailSchema(EmailBaseSchema):
+    pass
+
 class VerifyEmailSchema(EmailBaseSchema):
-    verification_url: str
+    pass
 
 class ResetPasswordEmailSchema(EmailBaseSchema):
     token: str
-    reset_url: str
 
 class PasswordChangedEmailSchema(EmailBaseSchema):
     pass

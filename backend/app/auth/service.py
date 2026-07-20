@@ -40,22 +40,29 @@ class AuthService:
         user = self.user_repository.create(user_data)
         token = self.auth_token_service.create(user, AuthTokenType.VERIFY_EMAIL)
 
-        verification_url = (
+        url = (
             f"{settings.frontend_url}/verify-email?token={token}"
         )
 
         send_verify_email_task.delay(
             user.email,
             user.username,
-            verification_url
+            url
         )
 
         return user
 
     def verify_email(self, token: str):
+        from app.workers.tasks import send_welcome_email_task
+
         db_token = self.auth_token_service.validate(token, AuthTokenType.VERIFY_EMAIL)
         self.auth_token_service.consume(token)
-        self.user_repository.email_verified(db_token.user_id)
+        user = self.user_repository.email_verified(db_token.user_id)
+
+        send_welcome_email_task.delay(
+            user.email,
+            user.username,
+        )
 
         return db_token.user_id
 
@@ -87,14 +94,14 @@ class AuthService:
 
         user = self.user_repository.find_by_email(email)
         token = self.auth_token_service.create(user, AuthTokenType.RESET_PASSWORD)
-        reset_url = (
+        url = (
             f"{settings.frontend_url}/reset-password?token={token}"
         )
 
         send_reset_password_email_task.delay(
             user.email,
             user.username,
-            reset_url,
+            url,
             token
         )
 
@@ -107,10 +114,14 @@ class AuthService:
         self.auth_token_service.consume(db_token.id)
         self.repository.revoke_all(db_token.user_id)
         user = self.user_repository.find_by_id(db_token.user_id)
+        url = (
+            f"{settings.frontend_url}/login"
+        )
 
         send_password_change_email_task.delay(
             user.email,
             user.username,
+            url
         )
 
     def refresh(self, token: str):

@@ -28,7 +28,7 @@ class EmailService:
 
         self.fastmail = FastMail(self.config)
 
-    async def send_email(self, data: WelcomeEmailSchema):
+    async def send_welcome(self, data: WelcomeEmailSchema):
         message = MessageSchema(
             subject="Bem-vindo ao SoundDesk!",
             recipients=[data.email_to],     # type: ignore

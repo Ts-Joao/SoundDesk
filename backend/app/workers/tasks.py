@@ -79,7 +79,7 @@ def send_welcome_email_task(email_to: str, username: str):
     )
 
     email_service = EmailService()
-    asyncio.run(email_service.send_email(data))
+    asyncio.run(email_service.send_welcome(data))
 
 @celery_app.task(name="send_verify_email_task")
 def send_verify_email_task(
@@ -93,7 +93,7 @@ def send_verify_email_task(
     data = VerifyEmailSchema(
         email_to=email_to,
         username=username,
-        verification_url=url
+        frontend_url=url
     )
 
     email_service = EmailService()
@@ -112,7 +112,7 @@ def send_reset_password_email_task(
     data = ResetPasswordEmailSchema(
         email_to=email_to,
         username=username,
-        reset_url=url,
+        frontend_url=url,
         token=token
     )
 
@@ -123,6 +123,7 @@ def send_reset_password_email_task(
 def send_password_change_email_task(
         email_to: str,
         username: str,
+        url: str
 ):
     from app.emails.service import EmailService
     from app.emails.schemas import PasswordChangedEmailSchema
@@ -130,6 +131,7 @@ def send_password_change_email_task(
     data = PasswordChangedEmailSchema(
         email_to=email_to,
         username=username,
+        frontend_url=url
     )
 
     email_service = EmailService()
