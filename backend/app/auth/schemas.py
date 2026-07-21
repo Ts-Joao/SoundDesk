@@ -36,3 +36,7 @@ class RefreshResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+
+class ChangeEmailSchema(BaseModel):
+    new_email: EmailStr
+    password: str

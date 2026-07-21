@@ -180,9 +180,12 @@ class AuthService:
     def change_email(
             self,
             new_email: str,
+            password: str,
             user: User
     ):
         from app.workers.tasks import send_confirm_email_change
+
+        self.verify_password(password, user.password_hash)
 
         if new_email == user.email:
             raise BadRequestException("Use a different email")
@@ -194,6 +197,7 @@ class AuthService:
 
         payload = {
             "new_email": new_email,
+            "password": user.password_hash
         }
 
         token = self.auth_token_service.create(
@@ -203,7 +207,7 @@ class AuthService:
         )
 
         url = (
-            f"{settings.frontend_url}/change-email"
+            f"{settings.frontend_url}/confirm-email-change?token={token}"
         )
 
         data = ConfirmEmailChangeSchema(

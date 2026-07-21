@@ -9,7 +9,7 @@ from app.auth.schemas import (
     LogoutSchema,
     RefreshRequest,
     ForgotPasswordSchema,
-    ResetPasswordSchema,
+    ResetPasswordSchema, ChangeEmailSchema,
 )
 from app.auth.service import AuthService
 from app.database.dependencies import get_db
@@ -125,8 +125,12 @@ def verify_password(
     status_code=200,
 )
 def change_email(
-        new_email: str,
+        data: ChangeEmailSchema,
         current_user: User = Depends(get_current_active_user),
         service: AuthService = Depends(get_auth_service)
 ):
-    service.change_email(new_email, current_user)
+    service.change_email(
+        data.new_email,
+        data.password,
+        current_user
+    )
