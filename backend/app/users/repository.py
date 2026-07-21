@@ -78,3 +78,15 @@ class UserRepository():
         self.db.commit()
         self.db.refresh(user)
         return user
+
+    def update_avatar(self, user: User, file_path: str):
+        user.avatar = file_path
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
+    def remove_avatar(self, user: User):
+        user.avatar = None
+        self.db.commit()
+        self.db.refresh(user)
+        return user
