@@ -17,3 +17,9 @@ class ResetPasswordEmailSchema(EmailBaseSchema):
 
 class PasswordChangedEmailSchema(EmailBaseSchema):
     pass
+
+class ConfirmEmailChangeSchema(EmailBaseSchema):
+    token: str
+    new_email: str
+    current_email: str
+    pass

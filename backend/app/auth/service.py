@@ -9,6 +9,7 @@ from app.auth.repository import RefreshTokenRepository
 from app.auth.schemas import LoginSchema
 from app.auth.utils import hash_token
 from app.config.settings import settings
+from app.emails.schemas import ConfirmEmailChangeSchema
 from app.enums.token_types import AuthTokenType
 from app.tokens.repository import AuthTokenRepository
 from app.exceptions.exceptions import UnauthorizedException, ForbiddenException, ConflictException, BadRequestException
@@ -176,6 +177,48 @@ class AuthService:
 
         self.repository.revoke(token)
 
+    def change_email(
+            self,
+            new_email: str,
+            user: User
+    ):
+        from app.workers.tasks import send_confirm_email_change
+
+        if new_email == user.email:
+            raise BadRequestException("Use a different email")
+
+        email_exist =  self.user_repository.find_by_email(new_email)
+
+        if email_exist:
+            raise BadRequestException("Use a different email")
+
+        payload = {
+            "new_email": new_email,
+        }
+
+        token = self.auth_token_service.create(
+            user,
+            AuthTokenType.EMAIL_CHANGE,
+            payload
+        )
+
+        url = (
+            f"{settings.frontend_url}/change-email"
+        )
+
+        data = ConfirmEmailChangeSchema(
+            email_to=user.email,
+            username=user.username,
+            frontend_url=url,
+            token=token,
+            new_email=new_email,
+            current_email=user.email,
+        )
+
+        send_confirm_email_change.delay(data)
+
+        return token
+
     def _generate_tokens(self, user: User):
         access_token = JWTService.create_access_token(user.id, user.role)
         token, expires_at = JWTService.create_refresh_token(user.id, user.role)
@@ -209,6 +252,17 @@ class AuthService:
             raise ForbiddenException("Access denied")
 
         return payload
+
+    @staticmethod
+    def verify_password(
+            password: str,
+            user_password: str
+    ):
+        password_match = verify_password(password, user_password)
+        if not password_match:
+            raise BadRequestException("Password not match")
+
+        return True
 
     @staticmethod
     def _validate_token(expires_at: datetime):

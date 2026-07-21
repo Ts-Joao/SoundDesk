@@ -9,3 +9,4 @@ class AuthTokenCreateSchema(BaseModel):
     token_hash: str
     type: AuthTokenType
     expires_at: datetime
+    payload: dict | None = None

@@ -108,3 +108,25 @@ def change_password(
         service: AuthService = Depends(get_auth_service)
 ):
     service.change_password(current_user.id, data)
+
+@router.post(
+    "/verify-password",
+    status_code=200,
+)
+def verify_password(
+        password: str,
+        current_user: User = Depends(get_current_active_user),
+        service: AuthService = Depends(get_auth_service)
+):
+    service.verify_password(password, current_user.password_hash)
+
+@router.patch(
+    "/change-email",
+    status_code=200,
+)
+def change_email(
+        new_email: str,
+        current_user: User = Depends(get_current_active_user),
+        service: AuthService = Depends(get_auth_service)
+):
+    service.change_email(new_email, current_user)

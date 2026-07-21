@@ -25,6 +25,7 @@ class AuthTokenService:
         self,
         user: User,
         token_type: AuthTokenType,
+        payload: dict | None = None,
     ) -> str:
 
         expiration = str(self._get_expiration_minutes(token_type))
@@ -40,6 +41,7 @@ class AuthTokenService:
             token_hash=hash_token(token),
             expires_at=expires_at,
             type=token_type,
+            payload=payload,
         )
 
         self.repository.create(data, user.id)
