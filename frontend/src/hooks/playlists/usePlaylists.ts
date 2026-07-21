@@ -20,34 +20,23 @@ export function usePlaylists(search?: string) {
     queryFn: async (): Promise<Playlist[]> => {
       const raw = await playlistsService.list();
 
-      const playlists: Playlist[] = await Promise.all(
-        raw.map(async (pl) => {
-          const rawTracks = await playlistTrackService.getTracks(pl.id).catch(() => []);
-          const color = pl.color || getPlaylistColor(pl.id);
+      const playlists: Playlist[] = raw.map((pl) => {
+        const color = pl.color || getPlaylistColor(pl.id);
 
-          const completedTracks = rawTracks.filter(
-            (t) => mapBackendStatus(t.status) === "completed"
-          ).length;
-          const failedTracks = rawTracks.filter((t) => mapBackendStatus(t.status) === "failed").length;
-          const pendingTracks = rawTracks.filter(
-            (t) => mapBackendStatus(t.status) === "pending" || mapBackendStatus(t.status) === "processing"
-          ).length;
-
-          return {
-            id:               pl.id,
-            name:             pl.name,
-            description:      pl.description ?? undefined,
-            color,
-            status:           "active" as const,
-            trackCount:       rawTracks.length,
-            completedTracks,
-            failedTracks,
-            pendingTracks,
-            createdAt:        new Date().toISOString(), // Fallback
-            updatedAt:        new Date().toISOString(),
-          };
-        })
-      );
+        return {
+          id:               pl.id,
+          name:             pl.name,
+          description:      pl.description ?? undefined,
+          color,
+          status:           "active" as const,
+          trackCount:       pl.track_count ?? 0,
+          completedTracks:  pl.completed_tracks ?? 0,
+          failedTracks:     pl.failed_tracks ?? 0,
+          pendingTracks:    pl.pending_tracks ?? 0,
+          createdAt:        pl.created_at ?? new Date().toISOString(),
+          updatedAt:        pl.updated_at ?? new Date().toISOString(),
+        };
+      });
 
       if (!search) return playlists;
 

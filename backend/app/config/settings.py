@@ -1,10 +1,44 @@
-from dotenv import load_dotenv
+from functools import lru_cache
 
-import os
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv()
+class Settings(BaseSettings):
+    # API
+    app_name: str = "SoundDesk"
+    debug: bool = False
 
-SECRET_KEY=os.getenv("SECRET_KEY")
-ALGORITHM=os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES=os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
-REFRESH_TOKEN_EXPIRE_DAYS=os.getenv("REFRESH_TOKEN_EXPIRE_DAYS")
+    # Frontend
+    frontend_url: str
+
+    # JWT
+    jwt_secret: str
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 15
+    refresh_token_expire_days: int = 7
+    verify_email_expire_minutes: int = 60
+    reset_password_expire_minutes: int = 30
+
+    # Email
+    mail_username: str
+    mail_password: str
+    mail_from: str
+    mail_from_name: str = "SoundDesk"
+
+    mail_server: str
+    mail_port: int
+
+    mail_starttls: bool = True
+    mail_ssl_tls: bool = False
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore"
+    )
+
+
+@lru_cache
+def get_settings():
+    return Settings()
+
+
+settings = get_settings()

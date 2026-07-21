@@ -46,9 +46,17 @@ class UpdatePlaylistSchema(BaseModel):
 
         return v
 
+from datetime import datetime
+
 class PlaylistResponseSchema(PlaylistBaseSchema):
     id: UUID
     user_id: UUID 
+    created_at: datetime
+    updated_at: datetime
+    track_count: int
+    completed_tracks: int
+    failed_tracks: int
+    pending_tracks: int
 
     model_config = {
         "from_attributes": True

@@ -1,5 +1,5 @@
 import hashlib
 
 
-def hash_refresh_token(token):
+def hash_token(token):
     return hashlib.sha256(token.encode('utf-8')).hexdigest()

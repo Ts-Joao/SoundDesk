@@ -29,6 +29,14 @@ class ExportJob(Base, TimestampMixin):
         nullable=False
     )
 
+    playlist_obj = relationship(
+        "Playlist",
+    )
+
+    @property
+    def playlist(self) -> str:
+        return self.playlist_obj.name if self.playlist_obj else "Sem Playlist"
+
     status: Mapped[ExportStatus] = mapped_column(
         Enum(ExportStatus),
         nullable=False,

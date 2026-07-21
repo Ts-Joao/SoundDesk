@@ -23,4 +23,7 @@ export const qk = {
 
   /** Jobs de exportação */
   exports: () => ["exports"] as const,
+
+  /** Estatísticas do dashboard */
+  dashboardStats: () => ["dashboard", "stats"] as const,
 } as const;

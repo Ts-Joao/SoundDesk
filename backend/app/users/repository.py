@@ -71,3 +71,10 @@ class UserRepository():
     def delete(self, user: User):
         self.db.delete(user)
         self.db.commit()
+
+    def email_verified(self, user_id: UUID):
+        user = self.find_by_id(user_id)
+        user.email_verified = True
+        self.db.commit()
+        self.db.refresh(user)
+        return user

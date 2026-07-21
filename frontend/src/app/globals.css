@@ -215,3 +215,12 @@ button {
     display: flex !important;
   }
 }
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+.sv-auth-input:focus {
+  outline: none;
+  border-color: rgba(108, 99, 255, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.12);
+}

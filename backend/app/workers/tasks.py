@@ -1,7 +1,11 @@
 from uuid import UUID
 
+import asyncio
+
+from app.config.settings import settings
 from app.database.session import SessionLocal
 from app.downloads.repository import DownloadJobRepository
+from app.emails.schemas import ConfirmEmailChangeSchema, EmailChangedSchema
 from app.exports.repository import ExportJobRepository
 from app.playlists.repository import PlaylistRepository
 from app.tracks.repository import TrackRepository
@@ -63,3 +67,87 @@ def process_export(
         )
     finally:
         db.close()
+
+@celery_app.task(name="send_welcome_email_task")
+def send_welcome_email_task(email_to: str, username: str):
+    from app.emails.service import EmailService
+    from app.emails.schemas import WelcomeEmailSchema
+
+    data = WelcomeEmailSchema(
+        email_to=email_to,
+        username=username,
+        frontend_url=settings.FRONTEND_URL + "/login"
+    )
+
+    email_service = EmailService()
+    asyncio.run(email_service.send_welcome(data))
+
+@celery_app.task(name="send_verify_email_task")
+def send_verify_email_task(
+        email_to: str,
+        username: str,
+        url: str
+):
+    from app.emails.service import EmailService
+    from app.emails.schemas import VerifyEmailSchema
+
+    data = VerifyEmailSchema(
+        email_to=email_to,
+        username=username,
+        frontend_url=url
+    )
+
+    email_service = EmailService()
+    asyncio.run(email_service.verify_email(data))
+
+@celery_app.task(name="send_reset_password_email_task")
+def send_reset_password_email_task(
+        email_to: str,
+        username: str,
+        url,
+        token
+):
+    from app.emails.service import EmailService
+    from app.emails.schemas import ResetPasswordEmailSchema
+
+    data = ResetPasswordEmailSchema(
+        email_to=email_to,
+        username=username,
+        frontend_url=url,
+        token=token
+    )
+
+    email_service = EmailService()
+    asyncio.run(email_service.reset_password(data))
+
+@celery_app.task(name="send_password_change_email_task")
+def send_password_change_email_task(
+        email_to: str,
+        username: str,
+        url: str
+):
+    from app.emails.service import EmailService
+    from app.emails.schemas import PasswordChangedEmailSchema
+
+    data = PasswordChangedEmailSchema(
+        email_to=email_to,
+        username=username,
+        frontend_url=url
+    )
+
+    email_service = EmailService()
+    asyncio.run(email_service.password_changed(data))
+
+@celery_app.task(name="send_confirm_email_change")
+def send_confirm_email_change(data: ConfirmEmailChangeSchema):
+    from app.emails.service import EmailService
+
+    email_service = EmailService()
+    asyncio.run(email_service.confirm_email_change(data))
+
+@celery_app.task(name="send_email_changed")
+def send_email_changed(data: EmailChangedSchema):
+    from app.emails.service import EmailService
+
+    email_service = EmailService()
+    asyncio.run(email_service.email_changed(data))

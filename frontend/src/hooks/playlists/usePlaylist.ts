@@ -7,6 +7,7 @@ import { getPlaylistColor } from "@/lib/playlistColor";
 import { mapApiTrack, mapBackendStatus } from "@/lib/trackMapper";
 import { qk } from "@/hooks/queryKeys";
 import type { Playlist } from "@/types";
+import type { ApiPlaylist, ApiTrack } from "@/types/api";
 
 /**
  * Busca uma playlist pelo ID combinando:
@@ -27,25 +28,30 @@ export function usePlaylist(id: string) {
 
       const [rawPlaylist, rawTracks] = await Promise.all([
         cachedPlaylist
-          ? Promise.resolve({ id: cachedPlaylist.id, name: cachedPlaylist.name, description: cachedPlaylist.description, color: cachedPlaylist.color })
+          ? Promise.resolve({
+              id:               cachedPlaylist.id,
+              name:             cachedPlaylist.name,
+              description:      cachedPlaylist.description,
+              color:            cachedPlaylist.color,
+              created_at:       cachedPlaylist.createdAt,
+              updated_at:       cachedPlaylist.updatedAt,
+              track_count:       cachedPlaylist.trackCount,
+              completed_tracks: cachedPlaylist.completedTracks,
+              failed_tracks:    cachedPlaylist.failedTracks,
+              pending_tracks:   cachedPlaylist.pendingTracks,
+            } as ApiPlaylist)
           : playlistsService.getById(id),
         playlistTrackService.getTracks(id),
       ]);
 
       const color = rawPlaylist.color || cachedPlaylist?.color || getPlaylistColor(rawPlaylist.id);
 
-      const tracks = rawTracks.map((t) =>
+      const tracks = rawTracks.map((t: ApiTrack) =>
         mapApiTrack(t, {
           playlistId:   rawPlaylist.id,
           playlistName: rawPlaylist.name,
         })
       );
-
-      const completedTracks = tracks.filter(
-        (t) => mapBackendStatus(t.status) === "completed"
-      ).length;
-      const failedTracks    = tracks.filter((t) => t.status === "failed").length;
-      const pendingTracks   = tracks.filter((t) => t.status === "pending").length;
 
       return {
         id:              rawPlaylist.id,
@@ -53,12 +59,12 @@ export function usePlaylist(id: string) {
         description:     rawPlaylist.description ?? undefined,
         color,
         status:          "active" as const,
-        trackCount:      tracks.length,
-        completedTracks,
-        failedTracks,
-        pendingTracks,
-        createdAt:       new Date().toISOString(),
-        updatedAt:       new Date().toISOString(),
+        trackCount:      rawPlaylist.track_count ?? tracks.length,
+        completedTracks: rawPlaylist.completed_tracks ?? 0,
+        failedTracks:    rawPlaylist.failed_tracks ?? 0,
+        pendingTracks:   rawPlaylist.pending_tracks ?? 0,
+        createdAt:       rawPlaylist.created_at ?? new Date().toISOString(),
+        updatedAt:       rawPlaylist.updated_at ?? new Date().toISOString(),
         tracks,
       };
     },

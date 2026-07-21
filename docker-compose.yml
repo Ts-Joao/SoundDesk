@@ -41,6 +41,8 @@ services:
       context: ./backend
     container_name: sound_worker
     command: celery -A app.workers.celery worker --loglevel=info
+    env_file:
+      - .env
     volumes:
       - ./backend:/app
     depends_on:

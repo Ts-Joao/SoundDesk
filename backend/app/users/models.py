@@ -57,6 +57,12 @@ class User(Base, TimestampMixin):
         default=True,
     )
 
+    auth_tokens = relationship(
+        "AuthToken",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
     refresh_tokens = relationship(
         "RefreshToken",
         back_populates="user",

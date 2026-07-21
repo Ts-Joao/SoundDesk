@@ -14,6 +14,7 @@ import { AddTrackModal, EditPlaylistModal } from "@/components/modals/index";
 import { TableRowSkeleton } from "@/components/skeletons";
 import { usePlaylist, useDeleteTrack, useCreateExport } from "@/hooks/useApi";
 import { getPlaylistProgress, formatDuration, formatDate, formatRelative } from "@/lib/utils";
+import type { Track } from "@/types";
 
 interface PlaylistDetailViewProps {
   playlistId: string;
@@ -34,7 +35,7 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
   if (isError) notFound();
 
   const filtered = data?.tracks.filter(
-    (t) =>
+    (t: Track) =>
       t.name.toLowerCase().includes(search.toLowerCase()) ||
       t.artist.toLowerCase().includes(search.toLowerCase())
   ) ?? [];
@@ -141,7 +142,7 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
             ))
           : filtered.length === 0
             ? <EmptyState icon={<MusicNote size={28} weight="duotone" />} title="Nenhuma música" description="Adicione URLs de músicas para começar." action="Adicionar Música" onAction={() => setShowAdd(true)} accentColor={ACCENT} />
-            : filtered.map((track, i) => (
+            : filtered.map((track: Track, i: number) => (
                 <div key={track.id} className="sv-row" style={{ display: "grid", gridTemplateColumns: "40px 1fr 140px 100px 80px 70px 80px", padding: "10px 18px", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.03)", fontSize: 13, transition: "background 0.15s" }}>
                   <div style={{ color: "rgba(255,255,255,0.2)", fontSize: 12 }}>{i + 1}</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
