@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.staticfiles import StaticFiles
+from fastapi.staticfiles import StaticFiles
 
 from app.exports.router import router as export_playlist
 from app.exceptions.exceptions import AppException

@@ -14,3 +14,5 @@ storage/downloads/*
 !storage/downloads/.gitkeep
 
 storage/exports/*
+
+storage/avatars/*
