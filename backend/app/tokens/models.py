@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from sqlalchemy import Text, TIMESTAMP, ForeignKey, Enum
+from sqlalchemy import Text, TIMESTAMP, ForeignKey, Enum, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin
@@ -32,6 +32,11 @@ class AuthToken(Base, TimestampMixin):
     token_hash: Mapped[str] = mapped_column(
         Text,
         nullable=False
+    )
+
+    payload: Mapped[dict[str, Any] | None] = mapped_column(
+        JSON,
+        nullable=True
     )
 
     expires_at: Mapped[datetime] = mapped_column(
