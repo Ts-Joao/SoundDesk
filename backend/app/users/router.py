@@ -1,7 +1,7 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
@@ -69,3 +69,28 @@ def delete_user(
     repository = UserRepository(db)
     service = UserService(repository)
     return service.delete_user(user_id)
+
+@router.patch(
+    "/me/avatar",
+    status_code=200
+)
+def update_avatar(
+        current_user: User = Depends(get_current_user),
+        file: UploadFile = File(...),
+        db: Session = Depends(get_db),
+):
+    repository = UserRepository(db)
+    service = UserService(repository)
+    return service.update_avatar(current_user.id, file)
+
+@router.delete(
+    "/me/avatar",
+    status_code=200,
+)
+def remove_avatar(
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+):
+    repository = UserRepository(db)
+    service = UserService(repository)
+    return service.remove_avatar(current_user.id)
