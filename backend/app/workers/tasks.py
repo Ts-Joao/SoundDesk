@@ -5,7 +5,7 @@ import asyncio
 from app.config.settings import settings
 from app.database.session import SessionLocal
 from app.downloads.repository import DownloadJobRepository
-from app.emails.schemas import ConfirmEmailChangeSchema
+from app.emails.schemas import ConfirmEmailChangeSchema, EmailChangedSchema
 from app.exports.repository import ExportJobRepository
 from app.playlists.repository import PlaylistRepository
 from app.tracks.repository import TrackRepository
@@ -144,3 +144,10 @@ def send_confirm_email_change(data: ConfirmEmailChangeSchema):
 
     email_service = EmailService()
     asyncio.run(email_service.confirm_email_change(data))
+
+@celery_app.task(name="send_email_changed")
+def send_email_changed(data: EmailChangedSchema):
+    from app.emails.service import EmailService
+
+    email_service = EmailService()
+    asyncio.run(email_service.email_changed(data))

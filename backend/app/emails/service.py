@@ -7,7 +7,7 @@ from app.emails.schemas import (
     WelcomeEmailSchema,
     VerifyEmailSchema,
     ResetPasswordEmailSchema,
-    PasswordChangedEmailSchema, ConfirmEmailChangeSchema
+    PasswordChangedEmailSchema, ConfirmEmailChangeSchema, EmailChangedSchema
 )
 
 class EmailService:
@@ -67,9 +67,18 @@ class EmailService:
 
     async def confirm_email_change(self, data: ConfirmEmailChangeSchema):
         message = MessageSchema(
-            subject="✉️ Confirma o seu novo endereço de e-mailo",
+            subject="✉️ Confirma o seu novo endereço de e-mail",
             recipients=[data.email_to],  # type: ignore
             template_body=data.model_dump(),
             subtype=MessageType.html
         )
         await self.fastmail.send_message(message, template_name="confirm_email_change.html")
+
+    async def email_changed(self, data: EmailChangedSchema):
+        message = MessageSchema(
+            subject="⚠️ Alerta de Segurança: Endereço de e-mail atualizado",
+            recipients=[data.email_to],  # type: ignore
+            template_body=data.model_dump(),
+            subtype=MessageType.html
+        )
+        await self.fastmail.send_message(message, template_name="email_changed.html")

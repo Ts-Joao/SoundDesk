@@ -23,3 +23,7 @@ class ConfirmEmailChangeSchema(EmailBaseSchema):
     new_email: str
     current_email: str
     pass
+
+class EmailChangedSchema(BaseModel):
+    username: str
+    email_to: str

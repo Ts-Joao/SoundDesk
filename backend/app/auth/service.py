@@ -9,7 +9,7 @@ from app.auth.repository import RefreshTokenRepository
 from app.auth.schemas import LoginSchema
 from app.auth.utils import hash_token
 from app.config.settings import settings
-from app.emails.schemas import ConfirmEmailChangeSchema
+from app.emails.schemas import ConfirmEmailChangeSchema, EmailChangedSchema
 from app.enums.token_types import AuthTokenType
 from app.tokens.repository import AuthTokenRepository
 from app.exceptions.exceptions import UnauthorizedException, ForbiddenException, ConflictException, BadRequestException
@@ -177,7 +177,7 @@ class AuthService:
 
         self.repository.revoke(token)
 
-    def change_email(
+    def confirm_change_email(
             self,
             new_email: str,
             password: str,
@@ -222,6 +222,23 @@ class AuthService:
         send_confirm_email_change.delay(data)
 
         return token
+
+    def email_changed(self, token: str):
+        from app.workers.tasks import send_email_changed
+
+        db_token = self.auth_token_service.validate(token, AuthTokenType.EMAIL_CHANGE)
+
+        new_email = db_token.payload["new_email"]
+
+        user = self.user_repository.update(db_token.user_id, new_email)
+        self.auth_token_service.consume(db_token.id)
+        data: EmailChangedSchema = EmailChangedSchema(
+            email_to=new_email,
+            username=user.username,
+        )
+
+        send_email_changed.delay(data)
+        return user
 
     def _generate_tokens(self, user: User):
         access_token = JWTService.create_access_token(user.id, user.role)
