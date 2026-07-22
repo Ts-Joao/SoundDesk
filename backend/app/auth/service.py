@@ -181,7 +181,7 @@ class AuthService:
 
         self.repository.revoke(token)
 
-    def confirm_change_email(
+    def change_email(
             self,
             new_email: str,
             password: str,
@@ -223,15 +223,14 @@ class AuthService:
             current_email=user.email,
         )
 
-        send_confirm_email_change.delay(data)
+        send_confirm_email_change.delay(data.model_dump())
 
         return token
 
-    def email_changed(self, token: str):
+    def confirm_email_changed(self, token: str):
         from app.workers.tasks import send_email_changed
 
         db_token = self.auth_token_service.validate(token, AuthTokenType.EMAIL_CHANGE)
-
         new_email = db_token.payload["new_email"]
 
         user = self.user_repository.update(db_token.user_id, new_email)

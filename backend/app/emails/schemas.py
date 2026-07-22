@@ -22,7 +22,6 @@ class ConfirmEmailChangeSchema(EmailBaseSchema):
     token: str
     new_email: str
     current_email: str
-    pass
 
 class EmailChangedSchema(BaseModel):
     username: str

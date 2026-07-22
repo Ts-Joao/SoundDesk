@@ -88,6 +88,7 @@ class AuthTokenService:
         mapping = {
             AuthTokenType.VERIFY_EMAIL: settings.verify_email_expire_minutes,
             AuthTokenType.RESET_PASSWORD: settings.reset_password_expire_minutes,
+            AuthTokenType.EMAIL_CHANGE: settings.reset_password_expire_minutes,
         }
 
         return mapping[token_type]

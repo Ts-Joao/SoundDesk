@@ -139,9 +139,10 @@ def send_password_change_email_task(
     asyncio.run(email_service.password_changed(data))
 
 @celery_app.task(name="send_confirm_email_change")
-def send_confirm_email_change(data: ConfirmEmailChangeSchema):
+def send_confirm_email_change(data: dict):
     from app.emails.service import EmailService
 
+    data = ConfirmEmailChangeSchema(**data)
     email_service = EmailService()
     asyncio.run(email_service.confirm_email_change(data))
 
