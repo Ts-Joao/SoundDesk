@@ -181,6 +181,7 @@ export function ProfileView() {
 
             {/* Botão Alterar e-mail */}
             <button
+              type="button"
               onClick={() => setShowChangeEmail(true)}
               className="sv-btn"
               style={{

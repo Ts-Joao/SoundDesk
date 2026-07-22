@@ -5,27 +5,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Envelope, Lock, Spinner } from "@phosphor-icons/react";
+import { Envelope, Lock, Spinner, Check } from "@phosphor-icons/react";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogBody,
-  DialogFooter,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/shadcn/dialog";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogAction,
-} from "@/components/shadcn/alert-dialog";
-import { Button, Input, Label } from "@/components/shadcn/ui";
+import { Modal } from "@/components/modals/Modal";
+import { Button } from "@/components/ui/Button";
 import { changeEmailService } from "@/services/auth.service";
 
 // ─── Schema de validação ────────────────────────────────────────────────────
@@ -69,7 +52,14 @@ export function ChangeEmailDialog({
     defaultValues: { new_email: "", password: "" },
   });
 
-  // ── Submit ────────────────────────────────────────────────────────────────
+  if (!open && !showSuccess) return null;
+
+  const handleClose = () => {
+    if (!isSubmitting) {
+      reset();
+      onOpenChange(false);
+    }
+  };
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -78,12 +68,10 @@ export function ChangeEmailDialog({
         password: data.password,
       });
 
-      // Fechar o Dialog de formulário e abrir o de sucesso
       onOpenChange(false);
       reset();
       setShowSuccess(true);
     } catch (err: any) {
-      // Extrair mensagem de erro do backend
       let message = "Não foi possível alterar o e-mail.";
       try {
         const parsed = JSON.parse(err.message);
@@ -92,167 +80,131 @@ export function ChangeEmailDialog({
         message = err.message ?? message;
       }
       toast.error("Erro ao alterar e-mail", { description: message });
-      // Dialog permanece aberto, campos mantidos
     }
   };
 
-  // ── Fechar o Dialog de formulário limpando os campos ─────────────────────
-
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (!isSubmitting) {
-      if (!nextOpen) reset();
-      onOpenChange(nextOpen);
-    }
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    padding: "9px 12px 9px 34px",
+    background: "rgba(255,255,255,0.04)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: 8,
+    color: "#fff",
+    fontSize: 14,
+    outline: "none",
+    fontFamily: "inherit",
+    boxSizing: "border-box",
   };
-
-  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <>
-      {/* ── Dialog: formulário ──────────────────────────────────────── */}
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-[420px]">
-          <DialogHeader>
-            <DialogTitle>Alterar e-mail</DialogTitle>
-            <DialogDescription>
-              Informe o novo endereço e sua senha atual para confirmar. Um link
-              de verificação será enviado para o novo e-mail.
-            </DialogDescription>
-          </DialogHeader>
+      {/* Modal Formulário */}
+      {open && (
+        <Modal title="Alterar e-mail" onClose={handleClose} maxWidth={440}>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", margin: "0 0 16px", lineHeight: 1.5 }}>
+            Informe o novo endereço e sua senha atual para confirmar. Um link de verificação será enviado para o novo e-mail.
+          </p>
 
-          <form onSubmit={handleSubmit(onSubmit)} noValidate>
-            <DialogBody className="flex flex-col gap-5">
-
-              {/* E-mail atual — somente leitura */}
-              <div className="flex flex-col gap-1.5">
-                <Label>E-MAIL ATUAL</Label>
-                <div className="flex h-9 w-full items-center gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 text-sm text-white/35 select-none cursor-default">
-                  <Envelope size={14} className="shrink-0 text-white/20" />
-                  <span className="truncate">{currentEmail}</span>
-                </div>
+          <form onSubmit={handleSubmit(onSubmit)} noValidate style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {/* E-mail atual */}
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em", display: "block", marginBottom: 6 }}>
+                E-MAIL ATUAL
+              </label>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, color: "rgba(255,255,255,0.35)", fontSize: 14, userSelect: "none" }}>
+                <Envelope size={14} style={{ color: "rgba(255,255,255,0.2)", flexShrink: 0 }} />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentEmail}</span>
               </div>
+            </div>
 
-              {/* Novo e-mail */}
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="new_email">NOVO E-MAIL</Label>
-                <div className="relative">
-                  <Envelope
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none"
-                  />
-                  <Input
-                    id="new_email"
-                    type="email"
-                    placeholder="novo@email.com"
-                    autoComplete="email"
-                    disabled={isSubmitting}
-                    aria-invalid={!!errors.new_email}
-                    className="pl-8 aria-[invalid=true]:border-red-500/50 aria-[invalid=true]:focus:ring-red-500/10"
-                    {...register("new_email")}
-                  />
-                </div>
-                {errors.new_email && (
-                  <p className="text-xs text-red-400 mt-0.5">
-                    {errors.new_email.message}
-                  </p>
-                )}
+            {/* Novo E-mail */}
+            <div>
+              <label htmlFor="new_email" style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em", display: "block", marginBottom: 6 }}>
+                NOVO E-MAIL
+              </label>
+              <div style={{ position: "relative" }}>
+                <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)", display: "flex" }}>
+                  <Envelope size={14} />
+                </span>
+                <input
+                  id="new_email"
+                  type="email"
+                  placeholder="novo@email.com"
+                  autoComplete="email"
+                  disabled={isSubmitting}
+                  className="sv-input"
+                  style={inputStyle}
+                  {...register("new_email")}
+                />
               </div>
+              {errors.new_email && (
+                <p style={{ fontSize: 12, color: "#f87171", marginTop: 4 }}>{errors.new_email.message}</p>
+              )}
+            </div>
 
-              {/* Senha atual */}
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="password">SENHA ATUAL</Label>
-                <div className="relative">
-                  <Lock
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none"
-                  />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                    disabled={isSubmitting}
-                    aria-invalid={!!errors.password}
-                    className="pl-8 aria-[invalid=true]:border-red-500/50 aria-[invalid=true]:focus:ring-red-500/10"
-                    {...register("password")}
-                  />
-                </div>
-                {errors.password && (
-                  <p className="text-xs text-red-400 mt-0.5">
-                    {errors.password.message}
-                  </p>
-                )}
+            {/* Senha Atual */}
+            <div>
+              <label htmlFor="password" style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em", display: "block", marginBottom: 6 }}>
+                SENHA ATUAL
+              </label>
+              <div style={{ position: "relative" }}>
+                <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)", display: "flex" }}>
+                  <Lock size={14} />
+                </span>
+                <input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  disabled={isSubmitting}
+                  className="sv-input"
+                  style={inputStyle}
+                  {...register("password")}
+                />
               </div>
+              {errors.password && (
+                <p style={{ fontSize: 12, color: "#f87171", marginTop: 4 }}>{errors.password.message}</p>
+              )}
+            </div>
 
-            </DialogBody>
-
-            <DialogFooter>
-              {/* Cancelar */}
-              <Button
-                type="button"
-                variant="ghost"
-                size="md"
-                disabled={isSubmitting}
-                onClick={() => handleOpenChange(false)}
-              >
+            {/* Botões */}
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
+              <Button type="button" onClick={handleClose} disabled={isSubmitting}>
                 Cancelar
               </Button>
-
-              {/* Continuar */}
-              <Button
-                type="submit"
-                variant="default"
-                size="md"
-                disabled={isSubmitting}
-                className="min-w-[110px]"
-              >
+              <Button type="submit" variant="primary" accentColor="#6C63FF" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
-                    <Spinner
-                      size={14}
-                      className="animate-spin"
-                      aria-hidden
-                    />
-                    Enviando…
+                    <Spinner size={14} className="sv-spin" />
+                    Enviando...
                   </>
                 ) : (
                   "Continuar"
                 )}
               </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── AlertDialog: confirmação de sucesso ─────────────────────── */}
-      <AlertDialog open={showSuccess} onOpenChange={setShowSuccess}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            {/* Ícone de sucesso */}
-            <div className="mb-1 flex h-11 w-11 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20">
-              <Envelope size={20} className="text-emerald-400" />
             </div>
-            <AlertDialogTitle>Tudo certo!</AlertDialogTitle>
-            <AlertDialogDescription>
-              Enviamos um e-mail de confirmação para o novo endereço informado.
-              A alteração somente será concluída após você clicar no link
-              enviado para esse e-mail.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction asChild>
-              <Button
-                variant="default"
-                size="md"
-                onClick={() => setShowSuccess(false)}
-                className="w-full"
-              >
-                Entendi
-              </Button>
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          </form>
+        </Modal>
+      )}
+
+      {/* Modal Sucesso */}
+      {showSuccess && (
+        <Modal title="Tudo certo!" onClose={() => setShowSuccess(false)} maxWidth={400}>
+          <div style={{ display: "flex", gap: 14, marginBottom: 18 }}>
+            <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.25)", display: "flex", alignItems: "center", justifyContent: "center", color: "#10b981", flexShrink: 0 }}>
+              <Envelope size={22} weight="duotone" />
+            </div>
+            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, margin: 0, lineHeight: 1.6 }}>
+              Enviamos um e-mail de confirmação para o novo endereço informado. A alteração somente será concluída após você clicar no link enviado.
+            </p>
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <Button variant="primary" accentColor="#10b981" onClick={() => setShowSuccess(false)}>
+              Entendi
+            </Button>
+          </div>
+        </Modal>
+      )}
     </>
   );
 }
