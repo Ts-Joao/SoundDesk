@@ -74,14 +74,14 @@ def delete_user(
     "/me/avatar",
     status_code=200
 )
-def update_avatar(
+async def update_avatar(
         current_user: User = Depends(get_current_user),
         file: UploadFile = File(...),
         db: Session = Depends(get_db),
 ):
     repository = UserRepository(db)
     service = UserService(repository)
-    return service.update_avatar(current_user.id, file)
+    return await service.update_avatar(current_user.id, file)
 
 @router.delete(
     "/me/avatar",

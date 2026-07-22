@@ -17,6 +17,7 @@ from app.tokens.service import AuthTokenService
 from app.users.repository import UserRepository
 from app.users.models import User
 from app.users.schemas import CreateUserSchema, ChangePasswordSchema
+from app.users.service import UserService
 
 
 class AuthService:
@@ -95,6 +96,10 @@ class AuthService:
         from app.workers.tasks import send_reset_password_email_task
 
         user = self.user_repository.find_by_email(email)
+
+        if not user:
+            raise UnauthorizedException("Invalid credentials")
+
         token = self.auth_token_service.create(user, AuthTokenType.RESET_PASSWORD)
         url = (
             f"{settings.frontend_url}/reset-password?token={token}"

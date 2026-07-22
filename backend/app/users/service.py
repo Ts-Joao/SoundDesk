@@ -61,7 +61,7 @@ class UserService:
         user = self.find_by_id(user_id)
         return self.repository.delete(user)
 
-    def update_avatar(
+    async def update_avatar(
             self,
             user_id: UUID,
             file: UploadFile,
@@ -71,7 +71,7 @@ class UserService:
         if user.avatar:
             StorageService.delete_avatar(user.avatar)
 
-        file_path = StorageService.save_avatar(StorageService(), file)
+        file_path = await StorageService().save_avatar(file)
         self.repository.update_avatar(user, str(file_path))
         return user
 
