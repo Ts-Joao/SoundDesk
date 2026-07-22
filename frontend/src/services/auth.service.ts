@@ -20,7 +20,12 @@ export const authService = {
   register: (payload: Omit<RegisterPayload, "confirmPassword">): Promise<User> =>
     request("/auth/register", {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        username: payload.name,
+        display_name: payload.name,
+        email: payload.email,
+        password_hash: payload.password,
+      }),
     }),
 
   /** POST /auth/refresh → novos tokens */
