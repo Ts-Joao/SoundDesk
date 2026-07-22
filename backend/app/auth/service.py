@@ -117,7 +117,7 @@ class AuthService:
         db_token = self.auth_token_service.validate(token, AuthTokenType.RESET_PASSWORD)
 
         self.user_repository.reset_password(db_token.user_id, hash_password(new_password))
-        self.auth_token_service.consume(db_token.id)
+        self.auth_token_service.consume(token)
         self.repository.revoke_all(db_token.user_id)
         user = self.user_repository.find_by_id(db_token.user_id)
         url = (
