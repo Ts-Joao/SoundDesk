@@ -17,18 +17,11 @@ export const authService = {
     }),
 
   /** POST /auth/register → user */
-  register: (payload: Omit<RegisterPayload, "confirmPassword">): Promise<User> => {
-    const username = payload.name.toLowerCase().replace(/[^a-z0-9]/g, "") || "user";
-    return request("/auth/register", {
+  register: (payload: Omit<RegisterPayload, "confirmPassword">): Promise<User> =>
+    request("/auth/register", {
       method: "POST",
-      body: JSON.stringify({
-        username,
-        display_name: payload.name,
-        email: payload.email,
-        password_hash: payload.password,
-      }),
-    });
-  },
+      body: JSON.stringify(payload),
+    }),
 
   /** POST /auth/refresh → novos tokens */
   refresh: (refreshToken: string): Promise<AuthTokens> =>
@@ -59,13 +52,30 @@ export const authService = {
       body: JSON.stringify(payload),
     }),
 
-  /** GET /auth/verify-email */
+  /** POST /auth/verify-email */
   verifyEmail: (token: string): Promise<{ message: string }> =>
-    request<any>(`/auth/verify-email?token=${encodeURIComponent(token)}`).then(() => ({
-      message: "E-mail verificado com sucesso!",
-    })),
+    request("/auth/verify-email", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    }),
 
   /** POST /auth/resend-verification */
   resendVerification: (): Promise<{ message: string }> =>
     request("/auth/resend-verification", { method: "POST" }),
+};
+
+
+// ─── Change Email ───────────────────────────────────────────────────────────
+export interface ChangeEmailPayload {
+  new_email: string;
+  password: string;
+}
+
+export const changeEmailService = {
+  /** PATCH /auth/change-email */
+  changeEmail: (payload: ChangeEmailPayload): Promise<{ message: string }> =>
+    request("/auth/change-email", {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
 };
