@@ -34,10 +34,6 @@ export const authService = {
   logout: (): Promise<void> =>
     request("/auth/logout", { method: "POST" }),
 
-  /** GET /auth/me → user atual */
-  me: (): Promise<User> =>
-    request("/auth/me"),
-
   /** POST /auth/forgot-password */
   forgotPassword: (payload: ForgotPasswordPayload): Promise<{ message: string }> =>
     request("/auth/forgot-password", {
