@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (tokens: AuthTokens) => {
     tokenManager.setTokens(tokens.access_token, tokens.refresh_token);
-    const me = await authService.me();
+    const me = await userService.me();
     setUser(me);
     router.push("/dashboard");
   }, [router]);

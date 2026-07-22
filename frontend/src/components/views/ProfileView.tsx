@@ -20,11 +20,14 @@ export function ProfileView() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Perfil (apenas nome — email é read-only)
-  const [name, setName] = useState(user?.name ?? "");
+  const [name, setName] = useState(user?.username ?? "");
   const updateProfile = useUpdateProfile();
 
   // Change email dialog
   const [showChangeEmail, setShowChangeEmail] = useState(false);
+
+  // Avatar URL
+  const avatarUrl = `${process.env.NEXT_PUBLIC_API_URL}/${user?.avatar}`
 
   // Senha
   const [currentPw, setCurrentPw] = useState("");
@@ -56,7 +59,7 @@ export function ProfileView() {
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 4 * 1024 * 1024) { toast.error("Arquivo muito grande", "Máximo 4MB"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Arquivo muito grande", "Máximo 5MB"); return; }
     await uploadAvatar.mutateAsync(file);
   };
 
@@ -101,13 +104,13 @@ export function ProfileView() {
           <div style={{ position: "relative" }}>
             {user?.avatar ? (
               <img
-                src={user.avatar}
-                alt={user.name}
+                src={avatarUrl}
+                alt={user.username}
                 style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.1)" }}
               />
             ) : (
               <div style={{ width: 72, height: 72, borderRadius: "50%", background: hexToRgba(ACCENT, 0.2), border: `2px solid ${hexToRgba(ACCENT, 0.35)}`, display: "flex", alignItems: "center", justifyContent: "center", color: ACCENT, fontSize: 22, fontWeight: 700 }}>
-                {getInitials(user?.name ?? "?")}
+                {getInitials(user?.username ?? "?")}
               </div>
             )}
             <button
@@ -119,7 +122,7 @@ export function ProfileView() {
             </button>
           </div>
           <div>
-            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", margin: "0 0 8px" }}>JPG, PNG ou GIF. Máximo 4MB.</p>
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", margin: "0 0 8px" }}>JPG, PNG, JPEG ou WEBP. Máximo 5MB.</p>
             <button
               onClick={() => avatarInputRef.current?.click()}
               className="sv-btn"
