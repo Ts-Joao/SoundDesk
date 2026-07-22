@@ -59,6 +59,7 @@ class UserService:
 
     def delete_user(self, user_id: UUID):
         user = self.find_by_id(user_id)
+        self.remove_avatar(user.id)
         return self.repository.delete(user)
 
     async def update_avatar(
