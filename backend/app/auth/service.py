@@ -17,7 +17,6 @@ from app.tokens.service import AuthTokenService
 from app.users.repository import UserRepository
 from app.users.models import User
 from app.users.schemas import CreateUserSchema, ChangePasswordSchema
-from app.users.service import UserService
 
 
 class AuthService:
@@ -67,7 +66,7 @@ class AuthService:
             user.username,
         )
 
-        return db_token.user_id
+        return user
 
     def login(self, data: LoginSchema):
         user = self.user_repository.find_by_email(data.email)

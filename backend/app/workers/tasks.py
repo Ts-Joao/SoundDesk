@@ -76,7 +76,7 @@ def send_welcome_email_task(email_to: str, username: str):
     data = WelcomeEmailSchema(
         email_to=email_to,
         username=username,
-        frontend_url=settings.FRONTEND_URL + "/login"
+        frontend_url=settings.frontend_url + "/login"
     )
 
     email_service = EmailService()

@@ -27,13 +27,12 @@ class AuthTokenService:
         token_type: AuthTokenType,
         payload: dict | None = None,
     ) -> str:
-
-        expiration = str(self._get_expiration_minutes(token_type))
+        expiration = self._get_expiration_minutes(token_type)
 
         token, expires_at = JWTService.create_auth_token(
             user.id,
             user.role,
-            expiration,
+            str(expiration),
             token_type,
         )
 
@@ -49,7 +48,8 @@ class AuthTokenService:
         return token
 
     def find_by_hash(self, token: str) -> AuthToken:
-        db_token = self.repository.find_by_hash(token)
+        hashed = hash_token(token)
+        db_token = self.repository.find_by_hash(hashed)
 
         if not db_token:
             raise UnauthorizedException("Invalid token")
@@ -76,9 +76,9 @@ class AuthTokenService:
 
         return db_token
 
-    def consume(self, auth_token):
-        self.find_by_hash(auth_token)
-        self.repository.mark_as_used(auth_token.id)
+    def consume(self, token: str):
+        db_token = self.find_by_hash(token)
+        self.repository.mark_as_used(db_token.id)
 
     @staticmethod
     def _get_expiration_minutes(

@@ -55,7 +55,7 @@ export const authService = {
 
   /** POST /auth/verify-email */
   verifyEmail: (token: string): Promise<{ message: string }> =>
-    request("/auth/verify-email", {
+    request(`/auth/verify-email?token=${encodeURIComponent(token)}`, {
       method: "POST",
       body: JSON.stringify({ token }),
     }),
