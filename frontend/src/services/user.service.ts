@@ -28,7 +28,7 @@ export const userService = {
     const form = new FormData();
     form.append("file", file);
     return request("/users/me/avatar", {
-      method: "POST",
+      method: "PATCH",
       body: form,
       headers: {}, // deixa o browser definir Content-Type com boundary
     });

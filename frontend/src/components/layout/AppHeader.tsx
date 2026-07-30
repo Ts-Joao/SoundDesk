@@ -34,7 +34,8 @@ export function AppHeader({ onMenuClick, accentColor }: AppHeaderProps) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const avatarInitials = user?.name ? getInitials(user.name) : "?";
+  const avatarInitials = user?.username ? getInitials(user.username) : "?";
+  const avatarUrl = `${process.env.NEXT_PUBLIC_API_URL}/${user?.avatar}`
 
   return (
     <>
@@ -122,7 +123,7 @@ export function AppHeader({ onMenuClick, accentColor }: AppHeaderProps) {
             }}
           >
             {user?.avatar ? (
-              <img src={user.avatar} alt={user.name} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
+              <img src={avatarUrl} alt={user.username} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
             ) : (
               <div style={{ width: 28, height: 28, borderRadius: "50%", background: hexToRgba(accentColor, 0.25), border: `1px solid ${hexToRgba(accentColor, 0.4)}`, display: "flex", alignItems: "center", justifyContent: "center", color: accentColor, fontSize: 11, fontWeight: 700 }}>
                 {avatarInitials}
@@ -130,7 +131,7 @@ export function AppHeader({ onMenuClick, accentColor }: AppHeaderProps) {
             )}
             <div style={{ textAlign: "left" }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.85)", lineHeight: 1.2 }}>
-                {user?.name ?? "Usuário"}
+                {user?.username ?? "Usuário"}
               </div>
               <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", lineHeight: 1.2 }}>
                 {user?.email ?? ""}
@@ -157,7 +158,7 @@ export function AppHeader({ onMenuClick, accentColor }: AppHeaderProps) {
               }}
             >
               <div style={{ padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{user?.name}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{user?.username}</div>
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>{user?.email}</div>
               </div>
 

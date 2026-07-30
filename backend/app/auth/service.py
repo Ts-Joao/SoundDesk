@@ -66,7 +66,7 @@ class AuthService:
             user.username,
         )
 
-        return db_token.user_id
+        return user
 
     def login(self, data: LoginSchema):
         user = self.user_repository.find_by_email(data.email)
@@ -95,6 +95,10 @@ class AuthService:
         from app.workers.tasks import send_reset_password_email_task
 
         user = self.user_repository.find_by_email(email)
+
+        if not user:
+            raise UnauthorizedException("Invalid credentials")
+
         token = self.auth_token_service.create(user, AuthTokenType.RESET_PASSWORD)
         url = (
             f"{settings.frontend_url}/reset-password?token={token}"
@@ -113,7 +117,7 @@ class AuthService:
         db_token = self.auth_token_service.validate(token, AuthTokenType.RESET_PASSWORD)
 
         self.user_repository.reset_password(db_token.user_id, hash_password(new_password))
-        self.auth_token_service.consume(db_token.id)
+        self.auth_token_service.consume(token)
         self.repository.revoke_all(db_token.user_id)
         user = self.user_repository.find_by_id(db_token.user_id)
         url = (
@@ -177,7 +181,7 @@ class AuthService:
 
         self.repository.revoke(token)
 
-    def confirm_change_email(
+    def change_email(
             self,
             new_email: str,
             password: str,
@@ -219,15 +223,14 @@ class AuthService:
             current_email=user.email,
         )
 
-        send_confirm_email_change.delay(data)
+        send_confirm_email_change.delay(data.model_dump())
 
         return token
 
-    def email_changed(self, token: str):
+    def confirm_email_changed(self, token: str):
         from app.workers.tasks import send_email_changed
 
         db_token = self.auth_token_service.validate(token, AuthTokenType.EMAIL_CHANGE)
-
         new_email = db_token.payload["new_email"]
 
         user = self.user_repository.update(db_token.user_id, new_email)

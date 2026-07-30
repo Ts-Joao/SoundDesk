@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { User, Envelope, Lock, UserPlus } from "@phosphor-icons/react";
 import { AuthCard, AuthInput, AuthLink } from "@/components/auth/AuthCard";
-import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
 import { authService } from "@/services/auth.service";
+import { useRouter } from "next/navigation";
 
 export function RegisterForm() {
-  const { login } = useAuth();
+  const router = useRouter();
   const toast = useToast();
 
   const [name, setName] = useState("");
@@ -40,6 +40,7 @@ export function RegisterForm() {
       setEmail("");
       setPassword("");
       setConfirm("");
+      router.push("/login");
     } catch (err: any) {
       toast.error("Erro ao criar conta", err.message);
     } finally {

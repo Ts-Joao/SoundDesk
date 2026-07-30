@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import type { User, AuthTokens } from "@/types/auth";
 import { authService } from "@/services/auth.service";
 import { tokenManager } from "@/lib/auth/tokenManager";
+import {userService} from "@/services/user.service";
 
 interface AuthContextValue {
   user: User | null;
@@ -37,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       try {
-        const me = await authService.me();
+        const me = await userService.me();
         setUser(me);
       } catch {
         tokenManager.clearTokens();
@@ -50,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (tokens: AuthTokens) => {
     tokenManager.setTokens(tokens.access_token, tokens.refresh_token);
-    const me = await authService.me();
+    const me = await userService.me();
     setUser(me);
     router.push("/dashboard");
   }, [router]);

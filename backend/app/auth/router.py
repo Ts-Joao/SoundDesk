@@ -13,6 +13,7 @@ from app.auth.schemas import (
 )
 from app.auth.service import AuthService
 from app.database.dependencies import get_db
+from app.emails.schemas import ConfirmEmailChangeSchema
 from app.users.schemas import UserResponseSchema, CreateUserSchema, ChangePasswordSchema
 from app.users.models import User
 
@@ -134,3 +135,13 @@ def change_email(
         data.password,
         current_user
     )
+
+@router.post(
+    "/confirm-email-change",
+    status_code=200
+)
+def confirm_email_change(
+        token: str,
+        service: AuthService = Depends(get_auth_service)
+):
+    service.confirm_email_changed(token)

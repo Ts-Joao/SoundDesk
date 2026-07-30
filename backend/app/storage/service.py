@@ -3,20 +3,21 @@ from pathlib import Path
 from uuid import uuid4
 
 from PIL import Image, ImageOps
-from fastapi import UploadFile, File
+from fastapi import UploadFile
 
 from app.exceptions.exceptions import BadRequestException
 
 
 class StorageService:
-    def __init__(self):
-        pass
-
     AVATAR_PATH = Path("storage/avatars")
 
-    async def save_avatar(self, file: UploadFile = File(...)):
+    async def save_avatar(self, file: UploadFile) -> Path:
         self.validate_image(file)
+
         avatar = await file.read()
+
+        if len(avatar) > 5 * 1024 * 1024:
+            raise BadRequestException("File too large")
 
         try:
             image = Image.open(io.BytesIO(avatar))
@@ -28,31 +29,26 @@ class StorageService:
             size = (256, 256)
             processed_image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
         except Exception:
-            raise BadRequestException("Something went wrong")
+            raise BadRequestException("Invalid or corrupted image file")
 
         filename = self.generate_filename()
         self.AVATAR_PATH.mkdir(parents=True, exist_ok=True)
-        file_path = self.AVATAR_PATH / f"{filename}.jpg"
+
+        file_path = self.AVATAR_PATH / f"{filename}.webp"
+
         processed_image.save(file_path, format="WEBP", quality=90)
         return file_path
 
     @staticmethod
-    def validate_image(file: UploadFile = File(...)):
-        types = file.content_type
-        size = file.size
-        allowed_types = ["png", "jpg", "jpeg", "webp"]
-        max_size = 5 * 1024 * 1024
+    def validate_image(file: UploadFile):
+        allowed_types = {"image/png", "image/jpeg", "image/jpg", "image/webp"}
 
-        if types not in allowed_types:
-            raise BadRequestException("Invalid file type")
-
-        if size > max_size:
-            raise BadRequestException("File too large")
+        if file.content_type not in allowed_types:
+            raise BadRequestException("Invalid file type. Allowed: PNG, JPEG, WebP")
 
     @staticmethod
-    def generate_filename():
-        filename = uuid4()
-        return filename
+    def generate_filename() -> str:
+        return str(uuid4())
 
     @staticmethod
     def delete_avatar(url: str):
