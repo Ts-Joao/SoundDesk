@@ -40,6 +40,9 @@ class TrackService:
 
         return track
 
+    def find_by_source_url(self, source_url: str) -> Track:
+        return self.repository.find_by_source_url(source_url)
+
     def update(
             self,
             track_id: UUID,

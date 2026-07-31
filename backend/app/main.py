@@ -12,6 +12,7 @@ from app.downloads.router import router as downloads_router
 from app.users.router import router as user_router
 from app.auth.router import router as auth_router
 from app.dashboard.router import router as dashboard_router
+from app.imports.router import router as playlist_imports_router
 
 
 app = FastAPI(
@@ -66,6 +67,7 @@ api_router.include_router(auth_router)
 api_router.include_router(playlist_router)
 api_router.include_router(track_router)
 api_router.include_router(playlist_tracks_router)
+api_router.include_router(playlist_imports_router)
 api_router.include_router(downloads_router)
 api_router.include_router(export_playlist)
 api_router.include_router(dashboard_router)
