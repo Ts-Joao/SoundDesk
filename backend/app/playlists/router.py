@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_active_user
 from app.database.dependencies import get_db
 from app.users.models import User
 from app.playlists.repository import PlaylistRepository
@@ -24,7 +24,7 @@ router = APIRouter(prefix="/playlists", tags=["Playlists"])
 def create_playlist(
         data: CreatePlaylistSchema,
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+        current_user: User = Depends(get_current_active_user),
 ):
     repository = PlaylistRepository(db)
     service = PlaylistService(repository)
@@ -37,7 +37,7 @@ def create_playlist(
 )
 def find_all(
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
+        current_user: User = Depends(get_current_active_user)
 ):
     repository = PlaylistRepository(db)
     service = PlaylistService(repository)
@@ -51,7 +51,7 @@ def find_all(
 def find_by_id(
         playlist_id: UUID,
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+        current_user: User = Depends(get_current_active_user),
 ):
     repository = PlaylistRepository(db)
     service = PlaylistService(repository)
@@ -66,7 +66,7 @@ def update(
         playlist_id: UUID,
         data: UpdatePlaylistSchema,
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+        current_user: User = Depends(get_current_active_user),
 ):
     repository = PlaylistRepository(db)
     service = PlaylistService(repository)
@@ -80,7 +80,7 @@ def update(
 def delete(
         playlist_id: UUID,
         db:Session =Depends(get_db),
-        current_user: User = Depends(get_current_user),
+        current_user: User = Depends(get_current_active_user),
 ):
     repository = PlaylistRepository(db)
     service = PlaylistService(repository)

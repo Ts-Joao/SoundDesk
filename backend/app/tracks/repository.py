@@ -39,6 +39,18 @@ class TrackRepository():
     def find_by_source_url(self, source_url: str) -> Track | None:
         return self.db.query(Track).filter(Track.source_url == source_url).first()
 
+    def is_accessible_by_user(self, track_id: UUID, user_id: UUID) -> bool:
+        return (
+            self.db.query(PlaylistTrack)
+            .join(Playlist, Playlist.id == PlaylistTrack.playlist_id)
+            .filter(
+                PlaylistTrack.track_id == track_id,
+                Playlist.user_id == user_id,
+            )
+            .first()
+            is not None
+        )
+
     def update(
             self,
             track: Track,
@@ -102,6 +114,7 @@ class TrackRepository():
             .join(PlaylistTrack)
             .join(Playlist)
             .filter(Playlist.user_id == user_id)
+            .distinct()
             .order_by(Track.created_at.desc())
             .limit(limit)
             .all()

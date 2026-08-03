@@ -1,6 +1,7 @@
-from abc import ADBC, abstractmethod
+from abc import ABC, abstractmethod
 
-from app.imports.schemas import PlaylistImportSchema
+from app.exceptions.exceptions import BadRequestException
+from app.imports.schemas import PlaylistImportSchema, TrackImportSchema
 
 
 class ImportProvider(ABC):
@@ -22,12 +23,12 @@ class ImportProvider(ABC):
 
     @abstractmethod
     def validate_url(self, url: str) -> bool:
-        raise NotImplementedError
+        raise BadRequestException("Not implemented")
 
     @abstractmethod
     def extract_playlist(self, url: str) -> PlaylistImportSchema:
-        raise NotImplementedError
+        raise BadRequestException("Not implemented")
 
     @abstractmethod
-    def extract_track(self, url: str) -> PlaylistImportSchema:
-        raise NotImplementedError
+    def extract_track(self, url: str) -> TrackImportSchema:
+        raise BadRequestException("Not implemented")

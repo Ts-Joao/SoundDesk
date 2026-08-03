@@ -35,7 +35,7 @@ class Playlist(Base, TimestampMixin):
     color: Mapped[str] = mapped_column(
         String(7),
         nullable=False,
-        default="6C63FF",
+        default="#6C63FF",
     )
 
     tracks = relationship(

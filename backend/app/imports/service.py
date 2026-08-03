@@ -1,7 +1,10 @@
+from uuid import UUID
+
 from app.downloads.service import DownloadJobService
 from app.imports.providers.factory import ImportProviderFactory
 from app.playlists.service import PlaylistService
 from app.playlists.track_service import PlaylistTrackService
+from app.tracks.schemas import CreateTrackSchema
 from app.tracks.service import TrackService
 
 
@@ -27,9 +30,16 @@ class ImportService:
             track = self.track_service.find_by_source_url(imported_track.source_url)
 
             if not track:
-                track = self.track_service.create(imported_track)
-                self.download_job_service.create(track)
+                track = self.track_service.create(
+                    CreateTrackSchema(
+                        title=imported_track.title,
+                        artist=imported_track.artist or "Unknown artist",
+                        source_url=imported_track.source_url,
+                        duration=imported_track.duration or 0,
+                    )
+                )
 
             self.playlist_track_service.add_track(playlist.id, track.id, user_id)
 
+        self.download_job_service.download_playlist(playlist.id, user_id)
         return playlist

@@ -1,4 +1,5 @@
 from app.imports.providers.youtube import YoutubeProvider
+from app.exceptions.exceptions import BadRequestException
 
 
 class ImportProviderFactory:
@@ -16,4 +17,4 @@ class ImportProviderFactory:
             if provider.validate_url(url):
                 return provider
 
-        raise Exception("Provider not supported")
+        raise BadRequestException("Unsupported import URL")

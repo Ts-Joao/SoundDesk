@@ -15,7 +15,12 @@ class PlaylistRepository():
             data: CreatePlaylistSchema, 
             user_id: UUID
     ) -> Playlist:
-        playlist = Playlist(**data.model_dump(), user_id=user_id)
+        # Imported playlists carry track metadata as Pydantic models.  Those
+        # records are handled separately by ImportService; passing their
+        # serialized dictionaries to the SQLAlchemy ``tracks`` relationship
+        # makes SQLAlchemy try to treat a dict as a Track instance.
+        playlist_data = data.model_dump(exclude={"tracks"})
+        playlist = Playlist(**playlist_data, user_id=user_id)
 
         self.db.add(playlist)
         self.db.commit()

@@ -1,7 +1,7 @@
 from typing import List
 from uuid import UUID
 
-from app.exceptions.exceptions import NotFoundException
+from app.exceptions.exceptions import ForbiddenException, NotFoundException
 from app.enums.track_status import TrackStatus
 from app.tracks.repository import TrackRepository
 from app.tracks.models import Track
@@ -32,11 +32,14 @@ class TrackService:
     def find_all(self, user_id: UUID) -> List[Track]:
         return self.repository.find_all(user_id)
 
-    def find_by_id(self, track_id: UUID) -> Track:
+    def find_by_id(self, track_id: UUID, user_id: UUID | None = None) -> Track:
         track = self.repository.find_by_id(track_id)
 
         if not track:
             raise NotFoundException("Track not found")
+
+        if user_id is not None and not self.repository.is_accessible_by_user(track_id, user_id):
+            raise ForbiddenException("You don't have permission to access this track")
 
         return track
 
@@ -47,8 +50,9 @@ class TrackService:
             self,
             track_id: UUID,
             data: UpdateTrackSchema,
+            user_id: UUID,
     ) -> Track:
-        track = self.find_by_id(track_id)
+        track = self.find_by_id(track_id, user_id)
         return self.repository.update(track, data)
 
     def delete_if_orphan(self, track_id: UUID) -> bool:
