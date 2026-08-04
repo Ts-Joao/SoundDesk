@@ -45,6 +45,7 @@ services:
       - .env
     volumes:
       - ./backend:/app
+      - ./youtube_cookies.txt:/app/youtube_cookies.txt
     depends_on:
       - redis
 
