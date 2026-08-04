@@ -1,3 +1,4 @@
+import re
 import zipfile
 from pathlib import Path
 from uuid import UUID
@@ -94,6 +95,7 @@ class ExportJobService:
     @staticmethod
     def create_zip(
             playlist: Playlist,
+            job_id: UUID,
     ) -> str:
         exports_dir = Path("storage/exports")
         exports_dir.mkdir(
@@ -101,7 +103,10 @@ class ExportJobService:
             exist_ok=True,
         )
 
-        zip_path = exports_dir / f"{playlist.name}.zip"
+        # The job ID prevents two exports of playlists with the same name from
+        # overwriting one another.  It also keeps user input out of the path.
+        safe_name = re.sub(r"[^\w.-]+", "-", playlist.name, flags=re.UNICODE).strip(".-")
+        zip_path = exports_dir / f"{safe_name or 'playlist'}-{job_id}.zip"
 
         with zipfile.ZipFile(zip_path, "w") as zip_file:
             tracks_exported = 0
@@ -113,14 +118,13 @@ class ExportJobService:
                 if not track.file_path:
                     continue
 
-                tracks_exported =+ 1
-
                 file_path = Path("storage") / track.file_path
 
-                zip_file.write(
-                    file_path,
-                    arcname=file_path.name,
-                )
+                # A track can have been removed after its job completed.  Do
+                # not make the entire export fail because of that stale row.
+                if file_path.is_file():
+                    zip_file.write(file_path, arcname=file_path.name)
+                    tracks_exported += 1
 
         return str(zip_path)
 
@@ -135,7 +139,10 @@ class ExportJobService:
 
             playlist = self.playlist_repository.find_by_id(playlist_id)
 
-            zip_path = self.create_zip(playlist)
+            if playlist is None:
+                raise NotFoundException("Playlist not found")
+
+            zip_path = self.create_zip(playlist, job_id)
 
             self.update_path(job_id, zip_path)
 
@@ -156,9 +163,15 @@ class ExportJobService:
         if export_job.status != ExportStatus.COMPLETED:
             raise BadRequestException("Zip not available")
 
-        print(str(export_job.file_path))
+        if not export_job.file_path:
+            raise NotFoundException("Export file not found")
 
-        return str(export_job.file_path)
+        path = Path(export_job.file_path).resolve()
+        exports_dir = Path("storage/exports").resolve()
+        if exports_dir not in path.parents or not path.is_file():
+            raise NotFoundException("Export file not found")
+
+        return str(path)
 
     def delete(
             self,
