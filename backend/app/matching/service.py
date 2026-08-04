@@ -2,7 +2,10 @@ from yt_dlp import YoutubeDL
 from app.imports.schemas import PlaylistImportSchema
 
 
-class TrackMatchingService:
+class MatchingService:
+
+    def __init__(self):
+        pass
 
     @staticmethod
     def search_youtube_url(title: str, artist: str | None = None) -> str | None:
@@ -25,6 +28,6 @@ class TrackMatchingService:
         for track in playlist.tracks:
             yt_url = self.search_youtube_url(track.title, track.artist)
             if yt_url:
-                track.source_uri = yt_url
+                track.source_url = yt_url
 
         return playlist
