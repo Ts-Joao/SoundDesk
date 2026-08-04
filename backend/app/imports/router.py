@@ -15,6 +15,8 @@ from app.tracks.service import TrackService
 from app.downloads.service import DownloadJobService
 from app.common.file_service import FileService
 from app.users.models import User
+from app.matching.service import MatchingService
+
 
 router = APIRouter(prefix="/imports", tags=["Imports"])
 
@@ -37,12 +39,14 @@ def playlist_import(
     track_service = TrackService(track_repo, file_service=FileService())
     playlist_track_service = PlaylistTrackService(playlist_track_repo, playlist_repo, track_repo)
     download_job_service = DownloadJobService(download_job_repo, playlist_repo)
+    matching_service = MatchingService()
 
     service = ImportService(
         playlist_service=playlist_service,
         track_service=track_service,
         playlist_track_service=playlist_track_service,
         download_job_service=download_job_service,
+        matching_service=matching_service,
     )
 
     return service.import_playlist(playlist_url, current_user.id)
