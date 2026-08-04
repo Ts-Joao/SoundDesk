@@ -1,4 +1,5 @@
 from app.imports.providers.youtube import YoutubeProvider
+from app.imports.providers.spotify import SpotifyProvider
 from app.exceptions.exceptions import BadRequestException
 
 
@@ -8,6 +9,7 @@ class ImportProviderFactory:
 
     providers = [
         YoutubeProvider(),
+        SpotifyProvider(),
     ]
 
     @classmethod
