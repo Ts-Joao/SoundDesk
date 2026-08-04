@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowLeft, Plus, DownloadSimple, ArrowClockwise,
+  ArrowLeft, Plus, DownloadSimple, Export, ArrowClockwise,
   Trash, MusicNote, PencilSimple, Spinner,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
@@ -12,7 +12,7 @@ import { SearchInput, CoverArt, ProgressBar, EmptyState } from "@/components/ui/
 import { Badge } from "@/components/ui/Badge";
 import { AddTrackModal, EditPlaylistModal } from "@/components/modals/index";
 import { TableRowSkeleton } from "@/components/skeletons";
-import { usePlaylist, useDeleteTrack, useCreateExport } from "@/hooks/useApi";
+import { usePlaylist, useDeleteTrack, useCreateExport, useDownloadPlaylist } from "@/hooks/useApi";
 import { exportsService } from "@/services/export.service";
 import { tracksService } from "@/services/track.service";
 import { getPlaylistProgress, formatDuration, formatDate, formatRelative } from "@/lib/utils";
@@ -29,10 +29,12 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const { data, isLoading, isError, refetch } = usePlaylist(playlistId);
   const deleteTrack = useDeleteTrack();
   const createExport = useCreateExport();
+  const downloadPlaylist = useDownloadPlaylist();
 
   if (isError) notFound();
 
@@ -44,7 +46,21 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
 
   const progress = data ? getPlaylistProgress(data) : 0;
 
-  const handleDownloadPlaylist = async () => {
+  const handleDownloadPlaylistToDb = async () => {
+    if (!data) return;
+    setIsDownloading(true);
+    try {
+      await downloadPlaylist.mutateAsync(data.id);
+      refetch();
+    } catch (err) {
+      console.error("Download failed:", err);
+      alert("Falha ao iniciar o download das músicas.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleExportPlaylist = async () => {
     if (!data) return;
     setIsExporting(true);
     try {
@@ -66,7 +82,7 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
       const status = await checkStatus();
       if (status === "completed") {
         const blob = await exportsService.getZip(jobId);
-        saveBlob(blob, `playlist-${jobId}.zip`);
+        saveBlob(blob, `${data.name}.zip`);
       } else {
         alert("Erro ao exportar a playlist. Tente novamente.");
       }
@@ -122,8 +138,9 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
                 <ProgressBar value={progress} color={data.color} height={6} />
               </div>
             </div>
-            <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-              <Button variant="primary" accentColor={data.color} icon={isExporting ? <Spinner size={15} className="sv-spin" /> : <DownloadSimple size={15} weight="bold" />} onClick={handleDownloadPlaylist} disabled={isExporting}>{isExporting ? "Exportando..." : "Baixar tudo"}</Button>
+            <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
+              <Button variant="ghost" icon={isDownloading ? <Spinner size={15} className="sv-spin" /> : <DownloadSimple size={15} weight="bold" />} onClick={handleDownloadPlaylistToDb} disabled={isDownloading}>Download</Button>
+              <Button variant="primary" accentColor={data.color} icon={isExporting ? <Spinner size={15} className="sv-spin" /> : <Export size={15} weight="bold" />} onClick={handleExportPlaylist} disabled={isExporting}>{isExporting ? "Exportando..." : "Exportar"}</Button>
               <Button icon={<PencilSimple size={15} weight="bold" />} onClick={() => setShowEdit(true)}>Editar</Button>
               {data.failedTracks > 0 && <Button icon={<ArrowClockwise size={15} weight="bold" />}>Reprocessar</Button>}
             </div>

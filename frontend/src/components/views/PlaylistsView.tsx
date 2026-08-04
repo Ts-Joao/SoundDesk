@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, MusicNotes, DownloadSimple, PencilSimple, Trash, Spinner, UploadSimple } from "@phosphor-icons/react";
+import { Plus, MusicNotes, DownloadSimple, Export, PencilSimple, Trash, Spinner, UploadSimple } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import { SearchInput, CoverArt, ProgressBar, EmptyState } from "@/components/ui/index";
 import { CreatePlaylistModal, ConfirmDialog, EditPlaylistModal } from "@/components/modals/index";
 import { ImportPlaylistModal } from "@/components/modals/ImportPlaylistModal";
 import { PlaylistCardSkeleton } from "@/components/skeletons";
-import { usePlaylists, useDeletePlaylist, useCreateExport } from "@/hooks/useApi";
+import { usePlaylists, useDeletePlaylist, useCreateExport, useDownloadPlaylist } from "@/hooks/useApi";
 import { exportsService } from "@/services/export.service";
 import { getPlaylistProgress, formatRelative, hexToRgba } from "@/lib/utils";
 import type { Playlist } from "@/types";
@@ -22,10 +22,12 @@ export function PlaylistsView() {
   const [deleteTarget, setDeleteTarget] = useState<Playlist | null>(null);
   const [editTarget, setEditTarget] = useState<Playlist | null>(null);
   const [exportingId, setExportingId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const { data: playlists, isLoading, refetch } = usePlaylists(search);
   const deleteMutation = useDeletePlaylist();
   const createExport = useCreateExport();
+  const downloadPlaylist = useDownloadPlaylist();
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -34,9 +36,22 @@ export function PlaylistsView() {
   };
 
   const handleDownloadPlaylist = async (playlistId: string) => {
-    setExportingId(playlistId);
+    setDownloadingId(playlistId);
     try {
-      const job = await createExport.mutateAsync(playlistId) as any;
+      await downloadPlaylist.mutateAsync(playlistId);
+      refetch();
+    } catch (err) {
+      console.error("Download failed:", err);
+      alert("Falha ao iniciar o download das músicas.");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const handleExportPlaylist = async (playlist: Playlist) => {
+    setExportingId(playlist.id);
+    try {
+      const job = await createExport.mutateAsync(playlist.id) as any;
       const jobId = job.id;
 
       const checkStatus = async (): Promise<string> => {
@@ -57,7 +72,7 @@ export function PlaylistsView() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `playlist-${jobId}.zip`;
+        link.download = `${playlist.name}.zip`;
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -131,8 +146,9 @@ export function PlaylistsView() {
                     </div>
                   )}
 
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <Button size="sm" variant="primary" accentColor={pl.color} icon={exportingId === pl.id ? <Spinner size={13} className="sv-spin" /> : <DownloadSimple size={13} weight="bold" />} onClick={() => handleDownloadPlaylist(pl.id)} disabled={exportingId !== null}>{exportingId === pl.id ? "Exportando..." : "Download"}</Button>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <Button size="sm" variant="ghost" icon={downloadingId === pl.id ? <Spinner size={13} className="sv-spin" /> : <DownloadSimple size={13} weight="bold" />} onClick={() => handleDownloadPlaylist(pl.id)} disabled={downloadingId !== null}>Download</Button>
+                    <Button size="sm" variant="primary" accentColor={pl.color} icon={exportingId === pl.id ? <Spinner size={13} className="sv-spin" /> : <Export size={13} weight="bold" />} onClick={() => handleExportPlaylist(pl)} disabled={exportingId !== null}>{exportingId === pl.id ? "Exportando..." : "Exportar"}</Button>
                     <Button size="sm" icon={<PencilSimple size={13} weight="bold" />} onClick={() => setEditTarget(pl)}>Editar</Button>
                     <Button size="sm" variant="danger" icon={<Trash size={13} weight="bold" />} onClick={() => setDeleteTarget(pl)}>Excluir</Button>
                   </div>
