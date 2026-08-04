@@ -6,6 +6,7 @@ from app.playlists.service import PlaylistService
 from app.playlists.track_service import PlaylistTrackService
 from app.tracks.schemas import CreateTrackSchema
 from app.tracks.service import TrackService
+from app.matching.service import MatchingService
 
 
 class ImportService:
@@ -15,15 +16,21 @@ class ImportService:
             track_service: TrackService,
             playlist_track_service: PlaylistTrackService,
             download_job_service: DownloadJobService,
+            matching_service: MatchingService,
     ):
         self.playlist_service = playlist_service
         self.track_service = track_service
         self.playlist_track_service = playlist_track_service
         self.download_job_service = download_job_service
+        self.matching_service = matching_service
 
     def import_playlist(self, url: str, user_id: UUID):
         provider = ImportProviderFactory.get_provider(url)
         imported = provider.extract_playlist(url)
+
+        if getattr(provider, "requires_matching", False):
+            imported = self.matching_service.match_playlist(imported)
+
         playlist = self.playlist_service.create(imported, user_id)
 
         for imported_track in imported.tracks:

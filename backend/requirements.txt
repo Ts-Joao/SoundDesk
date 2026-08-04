@@ -16,3 +16,4 @@ FastAPI-Mail
 pydantic-settings
 pillow
 python-multipart
+spotipy
