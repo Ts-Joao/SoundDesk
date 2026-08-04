@@ -11,6 +11,8 @@ from app.enums.export_status import ExportStatus
 
 if TYPE_CHECKING:
     from app.users.models import User
+    from app.playlists.models import Playlist
+
 
 class ExportJob(Base, TimestampMixin):
     __tablename__ = 'export_jobs'
@@ -25,17 +27,18 @@ class ExportJob(Base, TimestampMixin):
     )
 
     playlist_id: Mapped[UUID] = mapped_column(
-        ForeignKey("playlists.id"),
+        ForeignKey("playlists.id", ondelete="CASCADE"),
         nullable=False
     )
 
-    playlist_obj = relationship(
+    playlist: Mapped["Playlist"] = relationship(
         "Playlist",
+        back_populates="export_jobs"
     )
 
     @property
-    def playlist(self) -> str:
-        return self.playlist_obj.name if self.playlist_obj else "Sem Playlist"
+    def playlist_name(self) -> str:
+        return self.playlist.name if self.playlist else "Sem Playlist"
 
     status: Mapped[ExportStatus] = mapped_column(
         Enum(ExportStatus),

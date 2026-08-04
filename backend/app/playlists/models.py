@@ -44,6 +44,13 @@ class Playlist(Base, TimestampMixin):
         back_populates="playlists",
     )
 
+    export_jobs = relationship(
+        "ExportJob",
+        back_populates="playlist",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
     @property
     def track_count(self) -> int:
         return len(self.tracks)
