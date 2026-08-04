@@ -14,7 +14,7 @@ from app.imports.schemas import (
 class YoutubeProvider(ImportProvider):
 
     @staticmethod
-    def validate_url(url: str) -> bool:
+    def can_handle(url: str) -> bool:
         host = (urlparse(url).hostname or "").lower()
         return host == "youtu.be" or host == "youtube.com" or host.endswith(".youtube.com")
 
@@ -66,7 +66,7 @@ class YoutubeProvider(ImportProvider):
             artist=data.get("uploader"),
             source_url=url,
             duration=data.get("duration"),
-            thumbnail_url=data.get("thumbnail"),
+            cover_path=data.get("thumbnail"),
         )
 
     @staticmethod

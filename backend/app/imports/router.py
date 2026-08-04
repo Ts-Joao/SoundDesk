@@ -1,4 +1,6 @@
 from app.downloads.repository import DownloadJobRepository
+from app.imports.providers.factory import ImportProviderFactory
+from app.imports.schemas import ImportPlaylistRequest
 from app.playlists.track_repository import PlaylistTrackRepository
 from app.tracks.repository import TrackRepository
 from app.playlists.repository import PlaylistRepository
@@ -26,7 +28,7 @@ router = APIRouter(prefix="/imports", tags=["Imports"])
     status_code=201,
 )
 def playlist_import(
-    playlist_url: str = Query(min_length=1),
+    body: ImportPlaylistRequest,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ) -> PlaylistResponseSchema:
@@ -40,8 +42,10 @@ def playlist_import(
     playlist_track_service = PlaylistTrackService(playlist_track_repo, playlist_repo, track_repo)
     download_job_service = DownloadJobService(download_job_repo, playlist_repo)
     matching_service = MatchingService()
+    provider_factory = ImportProviderFactory ()
 
     service = ImportService(
+        provider_factory=provider_factory,
         playlist_service=playlist_service,
         track_service=track_service,
         playlist_track_service=playlist_track_service,
@@ -49,4 +53,4 @@ def playlist_import(
         matching_service=matching_service,
     )
 
-    return service.import_playlist(playlist_url, current_user.id)
+    return service.import_playlist(body.playlist_url, current_user.id)

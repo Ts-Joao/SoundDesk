@@ -3,7 +3,8 @@ import { request } from "./api";
 
 export const importsService = {
   playlist: (playlistUrl: string) =>
-    request<ApiPlaylist>(`/imports?playlist_url=${encodeURIComponent(playlistUrl)}`, {
+    request<ApiPlaylist>("/imports/", {
       method: "POST",
+      body: JSON.stringify({ playlist_url: playlistUrl }),
     }),
 };

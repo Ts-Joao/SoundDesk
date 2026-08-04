@@ -1,52 +1,40 @@
 from uuid import UUID
-
-from app.downloads.service import DownloadJobService
 from app.imports.providers.factory import ImportProviderFactory
-from app.playlists.service import PlaylistService
-from app.playlists.track_service import PlaylistTrackService
-from app.tracks.schemas import CreateTrackSchema
-from app.tracks.service import TrackService
 from app.matching.service import MatchingService
 
 
 class ImportService:
+
     def __init__(
-            self,
-            playlist_service: PlaylistService,
-            track_service: TrackService,
-            playlist_track_service: PlaylistTrackService,
-            download_job_service: DownloadJobService,
-            matching_service: MatchingService,
+        self,
+        provider_factory: ImportProviderFactory,
+        matching_service: MatchingService,
+        playlist_service,
+        track_service,
+        playlist_track_service,
+        download_job_service,
     ):
+        self.provider_factory = provider_factory
+        self.matching_service = matching_service
         self.playlist_service = playlist_service
         self.track_service = track_service
         self.playlist_track_service = playlist_track_service
-        self.download_job_service = download_job_service
-        self.matching_service = matching_service
+        self.download_service = download_job_service
 
     def import_playlist(self, url: str, user_id: UUID):
-        provider = ImportProviderFactory.get_provider(url)
-        imported = provider.extract_playlist(url)
+        provider = self.provider_factory.get_provider(url)
 
-        if getattr(provider, "requires_matching", False):
-            imported = self.matching_service.match_playlist(imported)
+        imported_data = provider.extract_playlist(url)
 
-        playlist = self.playlist_service.create(imported, user_id)
+        if provider.requires_matching:
+            imported_data = self.matching_service.match_playlist(imported_data)
 
-        for imported_track in imported.tracks:
-            track = self.track_service.find_by_source_url(imported_track.source_url)
+        playlist = self.playlist_service.create(imported_data, user_id)
 
-            if not track:
-                track = self.track_service.create(
-                    CreateTrackSchema(
-                        title=imported_track.title,
-                        artist=imported_track.artist or "Unknown artist",
-                        source_url=imported_track.source_url,
-                        duration=imported_track.duration or 0,
-                    )
-                )
-
+        for imported_track in imported_data.tracks:
+            track, _ = self.track_service.get_or_create(imported_track)
             self.playlist_track_service.add_track(playlist.id, track.id, user_id)
 
-        self.download_job_service.download_playlist(playlist.id, user_id)
+        self.download_service.create_jobs(playlist.id, user_id)
+
         return playlist

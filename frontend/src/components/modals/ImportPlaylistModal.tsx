@@ -27,7 +27,16 @@ export function ImportPlaylistModal({ onClose, onSuccess, accentColor = "#6C63FF
       onSuccess?.();
       setTimeout(onClose, 900);
     } catch (reason) {
-      setError(reason instanceof Error ? "Não foi possível importar esta playlist. Verifique o link e tente novamente." : "Não foi possível importar esta playlist.");
+      if (reason instanceof Error) {
+        try {
+          const detail = JSON.parse(reason.message);
+          setError(detail.message || "Não foi possível importar esta playlist.");
+        } catch {
+          setError("Não foi possível importar esta playlist. Verifique o link e tente novamente.");
+        }
+      } else {
+        setError("Não foi possível importar esta playlist.");
+      }
     }
   };
 
