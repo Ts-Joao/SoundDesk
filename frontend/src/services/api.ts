@@ -76,3 +76,23 @@ export async function request<T>(endpoint: string, options: RequestInit = {}): P
   if (res.status === 204) return undefined as T;
   return res.json();
 }
+
+/** Fetches a protected binary response, refreshing the access token once when needed. */
+export async function requestBlob(endpoint: string, options: RequestInit = {}): Promise<Blob> {
+  const tm = await getTokenMgr();
+  const headers: Record<string, string> = { ...(options.headers as Record<string, string>) };
+  const applyToken = (token: string | null) => {
+    if (token) headers.Authorization = `Bearer ${token}`;
+  };
+  applyToken(tm?.getAccess() ?? null);
+
+  let response = await fetch(`${API}/api${endpoint}`, { ...options, headers });
+  if (response.status === 401 && tm) {
+    const token = await doRefresh();
+    if (!token) throw new Error("Sessão expirada");
+    applyToken(token);
+    response = await fetch(`${API}/api${endpoint}`, { ...options, headers });
+  }
+  if (!response.ok) throw new Error(await response.text() || `HTTP ${response.status}`);
+  return response.blob();
+}

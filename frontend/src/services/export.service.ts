@@ -1,4 +1,4 @@
-import { request } from "./api";
+import { request, requestBlob } from "./api";
 
 export const exportsService = {
   list: () => request('/exports'),
@@ -17,5 +17,5 @@ export const exportsService = {
     method: 'POST',
   }),
 
-  getZip: (id: string) => request(`/exports/${id}/download`),
+  getZip: (id: string) => requestBlob(`/exports/${id}/download`),
 }

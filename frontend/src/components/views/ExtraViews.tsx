@@ -19,7 +19,7 @@ import {
 // ============================================================
 import { useExportJobs } from "@/hooks/exports/useExportJobs";
 import { usePlaylists } from "@/hooks/playlists/usePlaylists";
-import { tokenManager } from "@/lib/auth/tokenManager";
+import { exportsService } from "@/services/export.service";
 import { useState } from "react";
 
 // ============================================================
@@ -33,13 +33,7 @@ export function ExportsView() {
   const handleDownload = async (id: string, name: string) => {
     setDownloadingId(id);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/exports/${id}/download`, {
-        headers: {
-          Authorization: `Bearer ${tokenManager.getAccess()}`,
-        },
-      });
-      if (!response.ok) throw new Error("Erro ao baixar arquivo");
-      const blob = await response.blob();
+      const blob = await exportsService.getZip(id);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

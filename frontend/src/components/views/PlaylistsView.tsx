@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, MusicNotes, DownloadSimple, PencilSimple, Trash, Spinner } from "@phosphor-icons/react";
+import { Plus, MusicNotes, DownloadSimple, PencilSimple, Trash, Spinner, UploadSimple } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import { SearchInput, CoverArt, ProgressBar, EmptyState } from "@/components/ui/index";
 import { CreatePlaylistModal, ConfirmDialog, EditPlaylistModal } from "@/components/modals/index";
+import { ImportPlaylistModal } from "@/components/modals/ImportPlaylistModal";
 import { PlaylistCardSkeleton } from "@/components/skeletons";
 import { usePlaylists, useDeletePlaylist, useCreateExport } from "@/hooks/useApi";
+import { exportsService } from "@/services/export.service";
 import { getPlaylistProgress, formatRelative, hexToRgba } from "@/lib/utils";
 import type { Playlist } from "@/types";
 
@@ -16,6 +18,7 @@ const ACCENT = "#6C63FF";
 export function PlaylistsView() {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Playlist | null>(null);
   const [editTarget, setEditTarget] = useState<Playlist | null>(null);
   const [exportingId, setExportingId] = useState<string | null>(null);
@@ -37,8 +40,7 @@ export function PlaylistsView() {
       const jobId = job.id;
 
       const checkStatus = async (): Promise<string> => {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/exports/${jobId}`);
-        const data = await res.json();
+        const data: any = await exportsService.getById(jobId);
         if (data.status === "COMPLETED" || data.status === "completed" || data.status === "READY") {
           return "completed";
         }
@@ -51,7 +53,15 @@ export function PlaylistsView() {
 
       const status = await checkStatus();
       if (status === "completed") {
-        window.open(`${process.env.NEXT_PUBLIC_API_URL}/api/exports/${jobId}/download`, "_blank");
+        const blob = await exportsService.getZip(jobId);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `playlist-${jobId}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
       } else {
         alert("Erro ao exportar a playlist. Tente novamente.");
       }
@@ -68,6 +78,9 @@ export function PlaylistsView() {
       <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar playlist..." />
         <div style={{ flex: 1 }} />
+        <Button variant="ghost" icon={<UploadSimple size={14} weight="bold" />} onClick={() => setShowImport(true)}>
+          Importar Playlist
+        </Button>
         <Button variant="primary" accentColor={ACCENT} icon={<Plus size={14} weight="bold" />} onClick={() => setShowCreate(true)}>
           Nova Playlist
         </Button>
@@ -131,6 +144,7 @@ export function PlaylistsView() {
       )}
 
       {showCreate && <CreatePlaylistModal onClose={() => setShowCreate(false)} onSuccess={() => refetch()} accentColor={ACCENT} />}
+      {showImport && <ImportPlaylistModal onClose={() => setShowImport(false)} onSuccess={() => refetch()} accentColor={ACCENT} />}
       {editTarget && (
         <EditPlaylistModal
           playlist={editTarget}

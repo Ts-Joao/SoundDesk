@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/Badge";
 import { AddTrackModal, EditPlaylistModal } from "@/components/modals/index";
 import { TableRowSkeleton } from "@/components/skeletons";
 import { usePlaylist, useDeleteTrack, useCreateExport } from "@/hooks/useApi";
+import { exportsService } from "@/services/export.service";
+import { tracksService } from "@/services/track.service";
 import { getPlaylistProgress, formatDuration, formatDate, formatRelative } from "@/lib/utils";
 import type { Track } from "@/types";
 
@@ -50,8 +52,7 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
       const jobId = job.id;
 
       const checkStatus = async (): Promise<string> => {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/exports/${jobId}`);
-        const dataStatus = await res.json();
+        const dataStatus: any = await exportsService.getById(jobId);
         if (dataStatus.status === "COMPLETED" || dataStatus.status === "completed" || dataStatus.status === "READY") {
           return "completed";
         }
@@ -64,7 +65,8 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
 
       const status = await checkStatus();
       if (status === "completed") {
-        window.open(`${process.env.NEXT_PUBLIC_API_URL}/api/exports/${jobId}/download`, "_blank");
+        const blob = await exportsService.getZip(jobId);
+        saveBlob(blob, `playlist-${jobId}.zip`);
       } else {
         alert("Erro ao exportar a playlist. Tente novamente.");
       }
@@ -76,8 +78,14 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
     }
   };
 
-  const handleDownloadTrack = (trackId: string) => {
-    window.open(`${process.env.NEXT_PUBLIC_API_URL}/api/tracks/${trackId}/download`, "_blank");
+  const handleDownloadTrack = async (track: Track) => {
+    try {
+      const blob = await tracksService.download(track.id);
+      saveBlob(blob, `${track.name}.mp3`);
+    } catch (error) {
+      console.error("Track download failed:", error);
+      alert("Não foi possível baixar esta música.");
+    }
   };
 
   return (
@@ -159,7 +167,7 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
                   <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 11 }}>{formatRelative(track.addedAt)}</div>
                   <div style={{ display: "flex", gap: 4 }}>
                     {track.status === "completed" && (
-                      <button className="sv-icon-btn" onClick={() => handleDownloadTrack(track.id)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", padding: 4, display: "flex" }}>
+                      <button className="sv-icon-btn" onClick={() => handleDownloadTrack(track)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", padding: 4, display: "flex" }}>
                         <DownloadSimple size={14} weight="bold" />
                       </button>
                     )}
@@ -186,4 +194,15 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
       )}
     </div>
   );
+}
+
+function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
