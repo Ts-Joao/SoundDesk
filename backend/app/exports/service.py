@@ -96,15 +96,14 @@ class ExportJobService:
     def create_zip(
             playlist: Playlist,
             job_id: UUID,
+            user_id: UUID,
     ) -> str:
-        exports_dir = Path("storage/exports")
+        exports_dir = Path("storage/exports") / str(user_id)
         exports_dir.mkdir(
             parents=True,
             exist_ok=True,
         )
 
-        # The job ID prevents two exports of playlists with the same name from
-        # overwriting one another.  It also keeps user input out of the path.
         safe_name = re.sub(r"[^\w.-]+", "-", playlist.name, flags=re.UNICODE).strip(".-")
         zip_path = exports_dir / f"{safe_name or 'playlist'}-{job_id}.zip"
 
@@ -120,8 +119,6 @@ class ExportJobService:
 
                 file_path = Path("storage") / track.file_path
 
-                # A track can have been removed after its job completed.  Do
-                # not make the entire export fail because of that stale row.
                 if file_path.is_file():
                     zip_file.write(file_path, arcname=file_path.name)
                     tracks_exported += 1
@@ -137,12 +134,16 @@ class ExportJobService:
         try:
             self.start_export(job_id)
 
+            job = self.repository.find_by_id(job_id)
+            if job is None:
+                raise NotFoundException("Export job not found")
+
             playlist = self.playlist_repository.find_by_id(playlist_id)
 
             if playlist is None:
                 raise NotFoundException("Playlist not found")
 
-            zip_path = self.create_zip(playlist, job_id)
+            zip_path = self.create_zip(playlist, job_id, job.user_id)
 
             self.update_path(job_id, zip_path)
 
@@ -157,7 +158,7 @@ class ExportJobService:
             self,
             job_id: UUID,
             user_id: UUID,
-    ):
+    ) -> tuple[str, str]:
         export_job = self.find_by_id(job_id, user_id)
 
         if export_job.status != ExportStatus.COMPLETED:
@@ -167,11 +168,15 @@ class ExportJobService:
             raise NotFoundException("Export file not found")
 
         path = Path(export_job.file_path).resolve()
-        exports_dir = Path("storage/exports").resolve()
-        if exports_dir not in path.parents or not path.is_file():
+        storage_dir = Path("storage").resolve()
+        if storage_dir not in path.parents or not path.is_file():
             raise NotFoundException("Export file not found")
 
-        return str(path)
+        playlist_name = export_job.playlist.name if export_job.playlist else "playlist"
+        safe_name = re.sub(r"[^\w.-]+", "-", playlist_name, flags=re.UNICODE).strip(".-") or "playlist"
+        filename = f"{safe_name}.zip"
+
+        return str(path), filename
 
     def delete(
             self,

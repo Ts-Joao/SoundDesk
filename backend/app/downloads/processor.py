@@ -48,9 +48,12 @@ class DownloaderService:
             self.track_repository.update_status(track, TrackStatus.PROCESSING)
             self.track_repository.db.commit()
 
+            job = self.download_job_service.find_by_id(job_id)
+            user_id = job.user_id if job else None
+
             metadata = self.get_metadata(track.source_url)
             audio_path = self.download_audio(
-                track.source_url, track.id, metadata["title"]
+                track.source_url, track.id, metadata["title"], user_id=user_id
             )
             cover_path = self.download_cover(
                 metadata.get("thumbnail_url"), track.id
@@ -143,11 +146,18 @@ class DownloaderService:
         }
 
     def download_audio(
-        self, source_url: str, track_id: UUID, title: str | None
+        self, source_url: str, track_id: UUID, title: str | None, user_id: UUID | None = None
     ) -> str:
-        self.DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
+        if user_id:
+            dest_dir = Path("storage/downloads") / str(user_id)
+            rel_prefix = f"downloads/{user_id}"
+        else:
+            dest_dir = Path("storage/downloads")
+            rel_prefix = "downloads"
+
+        dest_dir.mkdir(parents=True, exist_ok=True)
         stem = f"{self.sanitize_filename(title or 'track')}-{track_id}"
-        output_template = self.DOWNLOADS_DIR / f"{stem}.%(ext)s"
+        output_template = dest_dir / f"{stem}.%(ext)s"
 
         options = self._get_base_yt_opts()
         options.update(
@@ -167,7 +177,7 @@ class DownloaderService:
         with yt_dlp.YoutubeDL(options) as ydl:
             ydl.download([source_url])
 
-        return f"downloads/{stem}.mp3"
+        return f"{rel_prefix}/{stem}.mp3"
 
     def download_cover(
         self, thumbnail_url: str | None, track_id: UUID

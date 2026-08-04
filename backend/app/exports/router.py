@@ -123,10 +123,10 @@ def get_zip(
         file_service,
     )
 
-    path = service.get_zip(job_id, current_user.id)
+    path, filename = service.get_zip(job_id, current_user.id)
 
     return FileResponse(
         path=path,
-        filename=Path(path).name,
+        filename=filename,
         media_type='application/zip',
     )
