@@ -10,6 +10,7 @@ class TrackImportSchema(BaseModel):
     source_url: str
     duration: int | None = None
     cover_path: str | None = None
+    file_path: str | None = None
 
 class PlaylistImportSchema(BaseModel):
     name: str

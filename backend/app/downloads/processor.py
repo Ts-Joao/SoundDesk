@@ -1,5 +1,4 @@
 import logging
-import os
 import re
 from pathlib import Path
 from typing import Any
@@ -52,12 +51,11 @@ class DownloaderService:
             user_id = job.user_id if job else None
 
             metadata = self.get_metadata(track.source_url)
+
             audio_path = self.download_audio(
                 track.source_url, track.id, metadata["title"], user_id=user_id
             )
-            cover_path = self.download_cover(
-                metadata.get("thumbnail_url"), track.id
-            )
+            cover_path = self.download_cover(metadata.get("thumbnail_url"), track.id)
 
             track.title = metadata["title"] or track.title
             track.artist = metadata["uploader"] or track.artist
@@ -125,18 +123,49 @@ class DownloaderService:
     def _get_base_yt_opts(cls) -> dict[str, Any]:
         opts: dict[str, Any] = {
             "quiet": True,
+            "no_warnings": True,
             "noplaylist": True,
+            "source_address": "0.0.0.0",
+            "prefer_ffmpeg": True,
+            "js_runtimes": {"node": {}},
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["tv", "android", "web"],
+                }
+            },
+            "http_headers": {
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/120.0.0.0 Safari/537.36"
+                )
+            },
         }
-        if cls.COOKIES_PATH.exists():
+
+        if cls.COOKIES_PATH.exists() and cls.COOKIES_PATH.stat().st_size > 0:
             opts["cookiefile"] = str(cls.COOKIES_PATH)
+
         return opts
 
     @classmethod
     def get_metadata(cls, source_url: str) -> dict[str, Any]:
         options = cls._get_base_yt_opts()
 
-        with yt_dlp.YoutubeDL(options) as ydl:
-            info = ydl.extract_info(url=source_url, download=False)
+        try:
+            with yt_dlp.YoutubeDL(options) as ydl:
+                info = ydl.extract_info(url=source_url, download=False)
+        except yt_dlp.utils.DownloadError as err:
+            if "cookiefile" in options:
+                logger.warning(
+                    "Falha ao obter metadados com cookies. Tentando sem cookies. Erro: %s",
+                    err,
+                )
+                nocookie_opts = dict(options)
+                nocookie_opts.pop("cookiefile", None)
+                with yt_dlp.YoutubeDL(nocookie_opts) as ydl:
+                    info = ydl.extract_info(url=source_url, download=False)
+            else:
+                raise
 
         return {
             "title": info.get("title") if info else None,
@@ -159,10 +188,9 @@ class DownloaderService:
         stem = f"{self.sanitize_filename(title or 'track')}-{track_id}"
         output_template = dest_dir / f"{stem}.%(ext)s"
 
-        options = self._get_base_yt_opts()
-        options.update(
+        base_options = self._get_base_yt_opts()
+        base_options.update(
             {
-                "format": "bestaudio/best",
                 "outtmpl": str(output_template),
                 "postprocessors": [
                     {
@@ -174,8 +202,46 @@ class DownloaderService:
             }
         )
 
-        with yt_dlp.YoutubeDL(options) as ydl:
-            ydl.download([source_url])
+        options = dict(base_options)
+        options["format"] = "bestaudio/best"
+
+        try:
+            with yt_dlp.YoutubeDL(options) as ydl:
+                ydl.download([source_url])
+        except yt_dlp.utils.DownloadError as err:
+            logger.warning(
+                "Falha ao baixar 'bestaudio/best' para %s. Tentando fallback para 'best'. Erro: %s",
+                source_url,
+                err,
+            )
+            fallback_options = dict(base_options)
+            fallback_options["format"] = "best"
+            try:
+                with yt_dlp.YoutubeDL(fallback_options) as ydl:
+                    ydl.download([source_url])
+            except yt_dlp.utils.DownloadError as fallback_err:
+                if "cookiefile" in base_options:
+                    logger.warning(
+                        "Falha ao baixar com cookies. Tentando sem cookies. Erro: %s",
+                        fallback_err,
+                    )
+                    nocookie_options = dict(base_options)
+                    nocookie_options.pop("cookiefile", None)
+                    nocookie_options["format"] = "bestaudio/best"
+                    try:
+                        with yt_dlp.YoutubeDL(nocookie_options) as ydl:
+                            ydl.download([source_url])
+                    except yt_dlp.utils.DownloadError as nocookie_err:
+                        logger.warning(
+                            "Falha ao baixar 'bestaudio/best' sem cookies. Tentando fallback para 'best' sem cookies. Erro: %s",
+                            nocookie_err,
+                        )
+                        nocookie_fallback = dict(nocookie_options)
+                        nocookie_fallback["format"] = "best"
+                        with yt_dlp.YoutubeDL(nocookie_fallback) as ydl:
+                            ydl.download([source_url])
+                else:
+                    raise
 
         return f"{rel_prefix}/{stem}.mp3"
 

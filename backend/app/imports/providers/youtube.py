@@ -12,6 +12,13 @@ from app.imports.schemas import (
 
 
 class YoutubeProvider(ImportProvider):
+    def __init__(self):
+        self.playlist_options: dict[str, Any] = {
+            "extract_flat": "in_playlist",
+            "skip_download": True,
+            "quiet": True,
+            "no_warnings": True,
+        }
 
     @staticmethod
     def can_handle(url: str) -> bool:
@@ -19,7 +26,6 @@ class YoutubeProvider(ImportProvider):
         return host == "youtu.be" or host == "youtube.com" or host.endswith(".youtube.com")
 
     def extract_playlist(self, url: str) -> PlaylistImportSchema:
-
         try:
             with YoutubeDL(self.playlist_options) as ydl:
                 data = ydl.extract_info(url, download=False)

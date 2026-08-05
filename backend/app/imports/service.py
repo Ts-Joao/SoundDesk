@@ -1,4 +1,5 @@
 from uuid import UUID
+from app.exceptions.exceptions import ConflictException
 from app.imports.providers.factory import ImportProviderFactory
 from app.matching.service import MatchingService
 
@@ -33,8 +34,11 @@ class ImportService:
 
         for imported_track in imported_data.tracks:
             track, _ = self.track_service.get_or_create(imported_track)
-            self.playlist_track_service.add_track(playlist.id, track.id, user_id)
+            try:
+                self.playlist_track_service.add_track(playlist.id, track.id, user_id)
+            except ConflictException:
+                pass
 
-        self.download_service.create_jobs(playlist.id, user_id)
+        self.download_service.download_playlist(playlist.id, user_id)
 
         return playlist

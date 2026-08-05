@@ -98,6 +98,9 @@ class ExportJobService:
             job_id: UUID,
             user_id: UUID,
     ) -> str:
+        import logging
+        logger = logging.getLogger(__name__)
+
         exports_dir = Path("storage/exports") / str(user_id)
         exports_dir.mkdir(
             parents=True,
@@ -111,10 +114,20 @@ class ExportJobService:
             tracks_exported = 0
 
             for track in playlist.tracks:
-                if track.status != TrackStatus.READY:
+                # Accept both the Python enum and its string value stored in DB
+                status_value = track.status.value if hasattr(track.status, "value") else str(track.status)
+                if status_value != TrackStatus.READY.value:
+                    logger.debug(
+                        "Export %s: skipping track %s — status=%s",
+                        job_id, track.id, status_value,
+                    )
                     continue
 
                 if not track.file_path:
+                    logger.debug(
+                        "Export %s: skipping track %s — no file_path",
+                        job_id, track.id,
+                    )
                     continue
 
                 file_path = Path("storage") / track.file_path
@@ -122,8 +135,22 @@ class ExportJobService:
                 if file_path.is_file():
                     zip_file.write(file_path, arcname=file_path.name)
                     tracks_exported += 1
+                    logger.debug(
+                        "Export %s: added track %s from %s",
+                        job_id, track.id, file_path,
+                    )
+                else:
+                    logger.warning(
+                        "Export %s: track %s has file_path=%s but file not found at %s",
+                        job_id, track.id, track.file_path, file_path.resolve(),
+                    )
 
+        logger.info(
+            "Export %s: finished — %d track(s) packed into %s",
+            job_id, tracks_exported, zip_path,
+        )
         return str(zip_path)
+
 
     def process_export_playlist(
             self,
