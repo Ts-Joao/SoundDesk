@@ -35,13 +35,20 @@ class Playlist(Base, TimestampMixin):
     color: Mapped[str] = mapped_column(
         String(7),
         nullable=False,
-        default="6C63FF",
+        default="#6C63FF",
     )
 
     tracks = relationship(
         "Track",
         secondary="playlist_tracks",
         back_populates="playlists",
+    )
+
+    export_jobs = relationship(
+        "ExportJob",
+        back_populates="playlist",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
     @property

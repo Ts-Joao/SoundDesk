@@ -108,9 +108,7 @@ def find_by_id(
 
     return service.find_by_id(job_id, current_user.id)
 
-@router.get(
-    '/{job_id}/download',
-)
+@router.get('/{job_id}/download', response_class=FileResponse)
 def get_zip(
         job_id: UUID,
         db: Session = Depends(get_db),
@@ -125,10 +123,10 @@ def get_zip(
         file_service,
     )
 
-    path = service.get_zip(job_id, current_user.id)
+    path, filename = service.get_zip(job_id, current_user.id)
 
     return FileResponse(
-        path,
-        filename=Path(path).name,
+        path=path,
+        filename=filename,
         media_type='application/zip',
     )

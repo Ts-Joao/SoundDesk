@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowLeft, Plus, DownloadSimple, ArrowClockwise,
+  ArrowLeft, Plus, DownloadSimple, Export, ArrowClockwise,
   Trash, MusicNote, PencilSimple, Spinner,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
@@ -12,7 +12,9 @@ import { SearchInput, CoverArt, ProgressBar, EmptyState } from "@/components/ui/
 import { Badge } from "@/components/ui/Badge";
 import { AddTrackModal, EditPlaylistModal } from "@/components/modals/index";
 import { TableRowSkeleton } from "@/components/skeletons";
-import { usePlaylist, useDeleteTrack, useCreateExport } from "@/hooks/useApi";
+import { usePlaylist, useDeleteTrack, useCreateExport, useDownloadPlaylist } from "@/hooks/useApi";
+import { exportsService } from "@/services/export.service";
+import { tracksService } from "@/services/track.service";
 import { getPlaylistProgress, formatDuration, formatDate, formatRelative } from "@/lib/utils";
 import type { Track } from "@/types";
 
@@ -27,10 +29,12 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const { data, isLoading, isError, refetch } = usePlaylist(playlistId);
   const deleteTrack = useDeleteTrack();
   const createExport = useCreateExport();
+  const downloadPlaylist = useDownloadPlaylist();
 
   if (isError) notFound();
 
@@ -42,7 +46,21 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
 
   const progress = data ? getPlaylistProgress(data) : 0;
 
-  const handleDownloadPlaylist = async () => {
+  const handleDownloadPlaylistToDb = async () => {
+    if (!data) return;
+    setIsDownloading(true);
+    try {
+      await downloadPlaylist.mutateAsync(data.id);
+      refetch();
+    } catch (err) {
+      console.error("Download failed:", err);
+      alert("Falha ao iniciar o download das músicas.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleExportPlaylist = async () => {
     if (!data) return;
     setIsExporting(true);
     try {
@@ -50,8 +68,7 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
       const jobId = job.id;
 
       const checkStatus = async (): Promise<string> => {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/exports/${jobId}`);
-        const dataStatus = await res.json();
+        const dataStatus: any = await exportsService.getById(jobId);
         if (dataStatus.status === "COMPLETED" || dataStatus.status === "completed" || dataStatus.status === "READY") {
           return "completed";
         }
@@ -64,7 +81,8 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
 
       const status = await checkStatus();
       if (status === "completed") {
-        window.open(`${process.env.NEXT_PUBLIC_API_URL}/api/exports/${jobId}/download`, "_blank");
+        const blob = await exportsService.getZip(jobId);
+        saveBlob(blob, `${data.name}.zip`);
       } else {
         alert("Erro ao exportar a playlist. Tente novamente.");
       }
@@ -76,8 +94,14 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
     }
   };
 
-  const handleDownloadTrack = (trackId: string) => {
-    window.open(`${process.env.NEXT_PUBLIC_API_URL}/api/tracks/${trackId}/download`, "_blank");
+  const handleDownloadTrack = async (track: Track) => {
+    try {
+      const blob = await tracksService.download(track.id);
+      saveBlob(blob, `${track.name}.mp3`);
+    } catch (error) {
+      console.error("Track download failed:", error);
+      alert("Não foi possível baixar esta música.");
+    }
   };
 
   return (
@@ -114,8 +138,9 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
                 <ProgressBar value={progress} color={data.color} height={6} />
               </div>
             </div>
-            <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-              <Button variant="primary" accentColor={data.color} icon={isExporting ? <Spinner size={15} className="sv-spin" /> : <DownloadSimple size={15} weight="bold" />} onClick={handleDownloadPlaylist} disabled={isExporting}>{isExporting ? "Exportando..." : "Baixar tudo"}</Button>
+            <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
+              <Button variant="ghost" icon={isDownloading ? <Spinner size={15} className="sv-spin" /> : <DownloadSimple size={15} weight="bold" />} onClick={handleDownloadPlaylistToDb} disabled={isDownloading}>Download</Button>
+              <Button variant="primary" accentColor={data.color} icon={isExporting ? <Spinner size={15} className="sv-spin" /> : <Export size={15} weight="bold" />} onClick={handleExportPlaylist} disabled={isExporting}>{isExporting ? "Exportando..." : "Exportar"}</Button>
               <Button icon={<PencilSimple size={15} weight="bold" />} onClick={() => setShowEdit(true)}>Editar</Button>
               {data.failedTracks > 0 && <Button icon={<ArrowClockwise size={15} weight="bold" />}>Reprocessar</Button>}
             </div>
@@ -159,7 +184,7 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
                   <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 11 }}>{formatRelative(track.addedAt)}</div>
                   <div style={{ display: "flex", gap: 4 }}>
                     {track.status === "completed" && (
-                      <button className="sv-icon-btn" onClick={() => handleDownloadTrack(track.id)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", padding: 4, display: "flex" }}>
+                      <button className="sv-icon-btn" onClick={() => handleDownloadTrack(track)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", padding: 4, display: "flex" }}>
                         <DownloadSimple size={14} weight="bold" />
                       </button>
                     )}
@@ -186,4 +211,15 @@ export function PlaylistDetailView({ playlistId }: PlaylistDetailViewProps) {
       )}
     </div>
   );
+}
+
+function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }

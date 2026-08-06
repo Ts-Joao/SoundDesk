@@ -1,5 +1,5 @@
 import type { ApiTrack, CreateTrackPayload } from "@/types/api";
-import { request } from "./api";
+import { request, requestBlob } from "./api";
 
 export const tracksService = {
   list: () =>
@@ -24,4 +24,6 @@ export const tracksService = {
     request<void>(`/tracks/${id}`, {
       method: "DELETE",
     }),
+
+  download: (id: string) => requestBlob(`/tracks/${id}/download`),
 };

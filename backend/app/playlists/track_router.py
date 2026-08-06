@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import Depends, APIRouter
 from sqlalchemy.orm import Session
 
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_active_user
 from app.database.dependencies import get_db
 from app.users.models import User
 from app.playlists.repository import PlaylistRepository
@@ -24,7 +24,7 @@ def add_track(
         playlist_id: UUID,
         track_id: UUID,
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+        current_user: User = Depends(get_current_active_user),
 ):
     playlist_repository = PlaylistRepository(db)
     track_repository = TrackRepository(db)
@@ -48,7 +48,7 @@ def add_track(
 def find_tracks(
         playlist_id: UUID,
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+        current_user: User = Depends(get_current_active_user),
 ):
     playlist_repository = PlaylistRepository(db)
     track_repository = TrackRepository(db)
@@ -69,7 +69,7 @@ def remove_track(
         playlist_id: UUID,
         track_id: UUID,
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+        current_user: User = Depends(get_current_active_user),
 ):
     playlist_repository = PlaylistRepository(db)
     track_repository = TrackRepository(db)

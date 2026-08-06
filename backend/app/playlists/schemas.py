@@ -22,6 +22,9 @@ class PlaylistBaseSchema(BaseModel):
     @field_validator("color")
     @classmethod
     def validate_color(cls, v: str) -> str:
+        if not v.startswith("#"):
+            v = f"#{v}"
+
         if v not in ALLOWED_PLAYLIST_COLOR:
             raise ValueError("Invalid playlist color")
 
@@ -31,7 +34,7 @@ class CreatePlaylistSchema(PlaylistBaseSchema):
     pass
 
 class UpdatePlaylistSchema(BaseModel):
-    name: str
+    name: str | None = None
     description: str | None = None
     color: str | None = None
 
@@ -40,6 +43,9 @@ class UpdatePlaylistSchema(BaseModel):
     def validate_color(cls, v: str | None):
         if v is None:
             return v
+
+        if not v.startswith("#"):
+            v = f"#{v}"
 
         if v not in ALLOWED_PLAYLIST_COLOR:
             raise ValueError("Invalid playlist color")

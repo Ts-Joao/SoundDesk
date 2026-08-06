@@ -1,3 +1,4 @@
+import re
 import zipfile
 from pathlib import Path
 from uuid import UUID
@@ -94,35 +95,62 @@ class ExportJobService:
     @staticmethod
     def create_zip(
             playlist: Playlist,
+            job_id: UUID,
+            user_id: UUID,
     ) -> str:
-        exports_dir = Path("storage/exports")
+        import logging
+        logger = logging.getLogger(__name__)
+
+        exports_dir = Path("storage/exports") / str(user_id)
         exports_dir.mkdir(
             parents=True,
             exist_ok=True,
         )
 
-        zip_path = exports_dir / f"{playlist.name}.zip"
+        safe_name = re.sub(r"[^\w.-]+", "-", playlist.name, flags=re.UNICODE).strip(".-")
+        zip_path = exports_dir / f"{safe_name or 'playlist'}-{job_id}.zip"
 
         with zipfile.ZipFile(zip_path, "w") as zip_file:
             tracks_exported = 0
 
             for track in playlist.tracks:
-                if track.status != TrackStatus.READY:
+                # Accept both the Python enum and its string value stored in DB
+                status_value = track.status.value if hasattr(track.status, "value") else str(track.status)
+                if status_value != TrackStatus.READY.value:
+                    logger.debug(
+                        "Export %s: skipping track %s — status=%s",
+                        job_id, track.id, status_value,
+                    )
                     continue
 
                 if not track.file_path:
+                    logger.debug(
+                        "Export %s: skipping track %s — no file_path",
+                        job_id, track.id,
+                    )
                     continue
-
-                tracks_exported =+ 1
 
                 file_path = Path("storage") / track.file_path
 
-                zip_file.write(
-                    file_path,
-                    arcname=file_path.name,
-                )
+                if file_path.is_file():
+                    zip_file.write(file_path, arcname=file_path.name)
+                    tracks_exported += 1
+                    logger.debug(
+                        "Export %s: added track %s from %s",
+                        job_id, track.id, file_path,
+                    )
+                else:
+                    logger.warning(
+                        "Export %s: track %s has file_path=%s but file not found at %s",
+                        job_id, track.id, track.file_path, file_path.resolve(),
+                    )
 
+        logger.info(
+            "Export %s: finished — %d track(s) packed into %s",
+            job_id, tracks_exported, zip_path,
+        )
         return str(zip_path)
+
 
     def process_export_playlist(
             self,
@@ -133,9 +161,16 @@ class ExportJobService:
         try:
             self.start_export(job_id)
 
+            job = self.repository.find_by_id(job_id)
+            if job is None:
+                raise NotFoundException("Export job not found")
+
             playlist = self.playlist_repository.find_by_id(playlist_id)
 
-            zip_path = self.create_zip(playlist)
+            if playlist is None:
+                raise NotFoundException("Playlist not found")
+
+            zip_path = self.create_zip(playlist, job_id, job.user_id)
 
             self.update_path(job_id, zip_path)
 
@@ -150,15 +185,25 @@ class ExportJobService:
             self,
             job_id: UUID,
             user_id: UUID,
-    ):
+    ) -> tuple[str, str]:
         export_job = self.find_by_id(job_id, user_id)
 
         if export_job.status != ExportStatus.COMPLETED:
             raise BadRequestException("Zip not available")
 
-        print(str(export_job.file_path))
+        if not export_job.file_path:
+            raise NotFoundException("Export file not found")
 
-        return str(export_job.file_path)
+        path = Path(export_job.file_path).resolve()
+        storage_dir = Path("storage").resolve()
+        if storage_dir not in path.parents or not path.is_file():
+            raise NotFoundException("Export file not found")
+
+        playlist_name = export_job.playlist.name if export_job.playlist else "playlist"
+        safe_name = re.sub(r"[^\w.-]+", "-", playlist_name, flags=re.UNICODE).strip(".-") or "playlist"
+        filename = f"{safe_name}.zip"
+
+        return str(path), filename
 
     def delete(
             self,

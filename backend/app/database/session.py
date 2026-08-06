@@ -12,6 +12,7 @@ from app.downloads.models import DownloadJob  # noqa: F401, E402
 from app.exports.models import ExportJob  # noqa: F401, E402
 from app.playlists.models import Playlist, PlaylistTrack  # noqa: F401, E402
 from app.tracks.models import Track  # noqa: F401, E402
+from app.tokens.models import AuthToken  # noqa: F401, E402
 from app.users.models import User  # noqa: F401, E402
 
 

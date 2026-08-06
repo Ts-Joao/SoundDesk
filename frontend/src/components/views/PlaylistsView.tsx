@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, MusicNotes, DownloadSimple, PencilSimple, Trash, Spinner } from "@phosphor-icons/react";
+import { Plus, MusicNotes, DownloadSimple, Export, PencilSimple, Trash, Spinner, UploadSimple } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import { SearchInput, CoverArt, ProgressBar, EmptyState } from "@/components/ui/index";
 import { CreatePlaylistModal, ConfirmDialog, EditPlaylistModal } from "@/components/modals/index";
+import { ImportPlaylistModal } from "@/components/modals/ImportPlaylistModal";
 import { PlaylistCardSkeleton } from "@/components/skeletons";
-import { usePlaylists, useDeletePlaylist, useCreateExport } from "@/hooks/useApi";
+import { usePlaylists, useDeletePlaylist, useCreateExport, useDownloadPlaylist } from "@/hooks/useApi";
+import { exportsService } from "@/services/export.service";
 import { getPlaylistProgress, formatRelative, hexToRgba } from "@/lib/utils";
 import type { Playlist } from "@/types";
 
@@ -16,13 +18,16 @@ const ACCENT = "#6C63FF";
 export function PlaylistsView() {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Playlist | null>(null);
   const [editTarget, setEditTarget] = useState<Playlist | null>(null);
   const [exportingId, setExportingId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const { data: playlists, isLoading, refetch } = usePlaylists(search);
   const deleteMutation = useDeletePlaylist();
   const createExport = useCreateExport();
+  const downloadPlaylist = useDownloadPlaylist();
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -31,14 +36,26 @@ export function PlaylistsView() {
   };
 
   const handleDownloadPlaylist = async (playlistId: string) => {
-    setExportingId(playlistId);
+    setDownloadingId(playlistId);
     try {
-      const job = await createExport.mutateAsync(playlistId) as any;
+      await downloadPlaylist.mutateAsync(playlistId);
+      refetch();
+    } catch (err) {
+      console.error("Download failed:", err);
+      alert("Falha ao iniciar o download das músicas.");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const handleExportPlaylist = async (playlist: Playlist) => {
+    setExportingId(playlist.id);
+    try {
+      const job = await createExport.mutateAsync(playlist.id) as any;
       const jobId = job.id;
 
       const checkStatus = async (): Promise<string> => {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/exports/${jobId}`);
-        const data = await res.json();
+        const data: any = await exportsService.getById(jobId);
         if (data.status === "COMPLETED" || data.status === "completed" || data.status === "READY") {
           return "completed";
         }
@@ -51,7 +68,15 @@ export function PlaylistsView() {
 
       const status = await checkStatus();
       if (status === "completed") {
-        window.open(`${process.env.NEXT_PUBLIC_API_URL}/api/exports/${jobId}/download`, "_blank");
+        const blob = await exportsService.getZip(jobId);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${playlist.name}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
       } else {
         alert("Erro ao exportar a playlist. Tente novamente.");
       }
@@ -68,6 +93,9 @@ export function PlaylistsView() {
       <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar playlist..." />
         <div style={{ flex: 1 }} />
+        <Button variant="ghost" icon={<UploadSimple size={14} weight="bold" />} onClick={() => setShowImport(true)}>
+          Importar Playlist
+        </Button>
         <Button variant="primary" accentColor={ACCENT} icon={<Plus size={14} weight="bold" />} onClick={() => setShowCreate(true)}>
           Nova Playlist
         </Button>
@@ -118,8 +146,9 @@ export function PlaylistsView() {
                     </div>
                   )}
 
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <Button size="sm" variant="primary" accentColor={pl.color} icon={exportingId === pl.id ? <Spinner size={13} className="sv-spin" /> : <DownloadSimple size={13} weight="bold" />} onClick={() => handleDownloadPlaylist(pl.id)} disabled={exportingId !== null}>{exportingId === pl.id ? "Exportando..." : "Download"}</Button>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <Button size="sm" variant="ghost" icon={downloadingId === pl.id ? <Spinner size={13} className="sv-spin" /> : <DownloadSimple size={13} weight="bold" />} onClick={() => handleDownloadPlaylist(pl.id)} disabled={downloadingId !== null}>Download</Button>
+                    <Button size="sm" variant="primary" accentColor={pl.color} icon={exportingId === pl.id ? <Spinner size={13} className="sv-spin" /> : <Export size={13} weight="bold" />} onClick={() => handleExportPlaylist(pl)} disabled={exportingId !== null}>{exportingId === pl.id ? "Exportando..." : "Exportar"}</Button>
                     <Button size="sm" icon={<PencilSimple size={13} weight="bold" />} onClick={() => setEditTarget(pl)}>Editar</Button>
                     <Button size="sm" variant="danger" icon={<Trash size={13} weight="bold" />} onClick={() => setDeleteTarget(pl)}>Excluir</Button>
                   </div>
@@ -131,6 +160,7 @@ export function PlaylistsView() {
       )}
 
       {showCreate && <CreatePlaylistModal onClose={() => setShowCreate(false)} onSuccess={() => refetch()} accentColor={ACCENT} />}
+      {showImport && <ImportPlaylistModal onClose={() => setShowImport(false)} onSuccess={() => refetch()} accentColor={ACCENT} />}
       {editTarget && (
         <EditPlaylistModal
           playlist={editTarget}
