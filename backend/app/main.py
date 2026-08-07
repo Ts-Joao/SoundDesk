@@ -13,6 +13,7 @@ from app.users.router import router as user_router
 from app.auth.router import router as auth_router
 from app.dashboard.router import router as dashboard_router
 from app.imports.router import router as playlist_imports_router
+from app.health.router import router as health_router
 
 
 app = FastAPI(
@@ -28,7 +29,6 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "http://192.168.18.97:3000"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -62,6 +62,7 @@ async def http_exception_handler(
         content={"message": str(exc.detail)},
     )
 
+app.include_router(health_router)
 api_router.include_router(user_router)
 api_router.include_router(auth_router)
 api_router.include_router(playlist_router)
