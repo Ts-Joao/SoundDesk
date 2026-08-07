@@ -6,6 +6,13 @@ class Settings(BaseSettings):
     # API
     app_name: str = "SoundDesk"
     debug: bool = False
+    version: str
+    environment: str
+
+    # DATABASE
+    redis_db: int
+    redis_host: str
+    redis_port: int
 
     # Frontend
     frontend_url: str

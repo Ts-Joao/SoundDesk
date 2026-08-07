@@ -2,7 +2,10 @@ from fastapi import FastAPI, Request, APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
+from app.config.settings import settings
 from app.exports.router import router as export_playlist
 from app.exceptions.exceptions import AppException
 from app.playlists.router import router as playlist_router
@@ -13,7 +16,8 @@ from app.users.router import router as user_router
 from app.auth.router import router as auth_router
 from app.dashboard.router import router as dashboard_router
 from app.imports.router import router as playlist_imports_router
-
+from app.health.router import router as health_router
+from app.core.limiter import limiter
 
 app = FastAPI(
     title="SoundDesk API",
@@ -22,14 +26,12 @@ app = FastAPI(
 api_router = APIRouter(prefix="/api")
 
 app.mount("/storage", StaticFiles(directory="storage"), name="storage")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://192.168.18.97:3000"
-    ],
+    allow_origins=[settings.frontend_url],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -62,6 +64,7 @@ async def http_exception_handler(
         content={"message": str(exc.detail)},
     )
 
+app.include_router(health_router)
 api_router.include_router(user_router)
 api_router.include_router(auth_router)
 api_router.include_router(playlist_router)

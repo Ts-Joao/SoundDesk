@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import Depends, APIRouter, Query
+from fastapi import Depends, APIRouter, Query, Request
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
@@ -11,6 +11,7 @@ from app.downloads.repository import DownloadJobRepository
 from app.playlists.repository import PlaylistRepository
 from app.downloads.service import DownloadJobService
 from app.downloads.schemas import DownloadJobResponseSchema
+from app.core.limiter import limiter
 
 
 router = APIRouter(prefix="/downloads", tags=["Downloads"])
@@ -19,7 +20,9 @@ router = APIRouter(prefix="/downloads", tags=["Downloads"])
     "/{playlist_id}/download",
     status_code=202
 )
+@limiter.limit("20/minute")
 def download_playlist(
+        request: Request,
         playlist_id: UUID,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
