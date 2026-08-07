@@ -124,6 +124,7 @@ def change_password(
 )
 @limiter.limit("10/minute")
 def verify_password(
+        request: Request,
         password: str,
         current_user: User = Depends(get_current_active_user),
         service: AuthService = Depends(get_auth_service)
