@@ -2,6 +2,8 @@ from fastapi import FastAPI, Request, APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.exports.router import router as export_playlist
 from app.exceptions.exceptions import AppException
@@ -23,6 +25,8 @@ app = FastAPI(
 api_router = APIRouter(prefix="/api")
 
 app.mount("/storage", StaticFiles(directory="storage"), name="storage")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,

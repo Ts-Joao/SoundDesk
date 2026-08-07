@@ -1,12 +1,12 @@
+from fastapi import Depends, APIRouter, Query, Request
+from sqlalchemy.orm import Session
+
 from app.downloads.repository import DownloadJobRepository
 from app.imports.providers.factory import ImportProviderFactory
 from app.imports.schemas import ImportPlaylistRequest
 from app.playlists.track_repository import PlaylistTrackRepository
 from app.tracks.repository import TrackRepository
 from app.playlists.repository import PlaylistRepository
-from fastapi import Depends, APIRouter, Query
-from sqlalchemy.orm import Session
-
 from app.database.dependencies import get_db
 from app.auth.dependencies import get_current_active_user
 from app.imports.service import ImportService
@@ -18,6 +18,7 @@ from app.downloads.service import DownloadJobService
 from app.common.file_service import FileService
 from app.users.models import User
 from app.matching.service import MatchingService
+from app.core.limiter import limiter
 
 
 router = APIRouter(prefix="/imports", tags=["Imports"])
@@ -27,7 +28,9 @@ router = APIRouter(prefix="/imports", tags=["Imports"])
     response_model=PlaylistResponseSchema,
     status_code=201,
 )
+@limiter.limit("10/minute")
 def playlist_import(
+    request: Request,
     body: ImportPlaylistRequest,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),

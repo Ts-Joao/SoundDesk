@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
@@ -10,6 +10,7 @@ from app.exports.repository import ExportJobRepository
 from app.playlists.repository import PlaylistRepository
 from app.tracks.repository import TrackRepository
 from app.users.models import User
+from app.core.limiter import limiter
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
@@ -17,7 +18,9 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
     '',
     response_model=DashboardResponse
 )
+@limiter.limit("60/minute")
 def get_dashboard(
+        request: Request,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
