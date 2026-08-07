@@ -1,0 +1,265 @@
+import re
+import zipfile
+from pathlib import Path
+from uuid import UUID
+
+from app.exceptions.exceptions import BadRequestException, ForbiddenException, NotFoundException
+from app.enums.export_status import ExportStatus
+from app.enums.track_status import TrackStatus
+from app.playlists.models import Playlist
+from app.exports.models import ExportJob
+from app.exports.repository import ExportJobRepository
+from app.playlists.repository import PlaylistRepository
+from app.common.file_service import FileService
+
+
+class ExportJobService:
+    def __init__(
+            self,
+            repository: ExportJobRepository,
+            playlist_repository: PlaylistRepository,
+            file_service: FileService,
+    ):
+        self.repository = repository
+        self.playlist_repository = playlist_repository
+        self.file_service = file_service
+
+
+    def create(
+            self,
+            playlist_id: UUID,
+            user_id: UUID,
+    ):
+        from app.playlists.service import PlaylistService
+        from app.workers.tasks import process_export
+
+        PlaylistService(self.playlist_repository).find_by_id(playlist_id, user_id)
+        job = self.repository.create(playlist_id, user_id)
+        task = process_export.delay(
+            str(job.id),
+            str(playlist_id),
+        )
+        self.repository.update_celery_task_id(job.id, task.id)
+
+        return job
+
+    def find_all(
+            self,
+            user_id: UUID,
+    ):
+        return self.repository.find_all(user_id)
+
+    def find_by_id(
+            self,
+            job_id: UUID,
+            user_id: UUID,
+    ) -> ExportJob:
+        job = self.repository.find_by_id(job_id)
+
+        if not job:
+            raise NotFoundException("Job not found")
+
+        self._verify_ownership(job, user_id)
+
+        return job
+
+    def download_playlist_zip(self, job_id: UUID) -> ExportJob:
+        return self.repository.find_by_id(job_id)
+
+    def start_export(
+            self,
+            job_id: UUID,
+    ):
+        return self.repository.update_status(job_id, ExportStatus.PROCESSING)
+
+    def update_path(
+            self,
+            job_id: UUID,
+            path: str
+    ):
+        return self.repository.update_path(job_id, path)
+
+    def complete_export(
+            self,
+            job_id: UUID,
+    ):
+        return self.repository.update_status(job_id, ExportStatus.COMPLETED)
+
+    def fail(
+            self,
+            job_id: UUID,
+            error_message: str
+    ):
+        self.repository.update_status(job_id, ExportStatus.FAILED, error_message)
+
+    @staticmethod
+    def create_zip(
+            playlist: Playlist,
+            job_id: UUID,
+            user_id: UUID,
+    ) -> str:
+        import logging
+        logger = logging.getLogger(__name__)
+
+        exports_dir = Path("storage/exports") / str(user_id)
+        exports_dir.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        safe_name = re.sub(r"[^\w.-]+", "-", playlist.name, flags=re.UNICODE).strip(".-")
+        zip_path = exports_dir / f"{safe_name or 'playlist'}-{job_id}.zip"
+
+        with zipfile.ZipFile(zip_path, "w") as zip_file:
+            tracks_exported = 0
+
+            for track in playlist.tracks:
+                # Accept both the Python enum and its string value stored in DB
+                status_value = track.status.value if hasattr(track.status, "value") else str(track.status)
+                if status_value != TrackStatus.READY.value:
+                    logger.debug(
+                        "Export %s: skipping track %s — status=%s",
+                        job_id, track.id, status_value,
+                    )
+                    continue
+
+                if not track.file_path:
+                    logger.debug(
+                        "Export %s: skipping track %s — no file_path",
+                        job_id, track.id,
+                    )
+                    continue
+
+                file_path = Path("storage") / track.file_path
+
+                if file_path.is_file():
+                    zip_file.write(file_path, arcname=file_path.name)
+                    tracks_exported += 1
+                    logger.debug(
+                        "Export %s: added track %s from %s",
+                        job_id, track.id, file_path,
+                    )
+                else:
+                    logger.warning(
+                        "Export %s: track %s has file_path=%s but file not found at %s",
+                        job_id, track.id, track.file_path, file_path.resolve(),
+                    )
+
+        logger.info(
+            "Export %s: finished — %d track(s) packed into %s",
+            job_id, tracks_exported, zip_path,
+        )
+        return str(zip_path)
+
+
+    def process_export_playlist(
+            self,
+            job_id: UUID,
+            playlist_id: UUID,
+    ):
+
+        try:
+            self.start_export(job_id)
+
+            job = self.repository.find_by_id(job_id)
+            if job is None:
+                raise NotFoundException("Export job not found")
+
+            playlist = self.playlist_repository.find_by_id(playlist_id)
+
+            if playlist is None:
+                raise NotFoundException("Playlist not found")
+
+            zip_path = self.create_zip(playlist, job_id, job.user_id)
+
+            self.update_path(job_id, zip_path)
+
+            self.complete_export(job_id)
+
+            return str(zip_path)
+
+        except Exception as exc:
+            self.fail(job_id, str(exc))
+
+    def get_zip(
+            self,
+            job_id: UUID,
+            user_id: UUID,
+    ) -> tuple[str, str]:
+        export_job = self.find_by_id(job_id, user_id)
+
+        if export_job.status != ExportStatus.COMPLETED:
+            raise BadRequestException("Zip not available")
+
+        if not export_job.file_path:
+            raise NotFoundException("Export file not found")
+
+        path = Path(export_job.file_path).resolve()
+        storage_dir = Path("storage").resolve()
+        if storage_dir not in path.parents or not path.is_file():
+            raise NotFoundException("Export file not found")
+
+        playlist_name = export_job.playlist.name if export_job.playlist else "playlist"
+        safe_name = re.sub(r"[^\w.-]+", "-", playlist_name, flags=re.UNICODE).strip(".-") or "playlist"
+        filename = f"{safe_name}.zip"
+
+        return str(path), filename
+
+    def delete(
+            self,
+            job_id: UUID,
+            user_id: UUID,
+    ):
+        export_job = self.find_by_id(job_id, user_id)
+
+        self.file_service.delete_zip(export_job.file_path)
+        self.repository.delete(job_id)
+
+    def retry(
+            self,
+            job_id: UUID,
+            user_id: UUID,
+    ):
+        job = self.find_by_id(job_id, user_id)
+
+        if job.status != ExportStatus.FAILED:
+            raise BadRequestException("Only failed jobs can be retried")
+
+        self.repository.update_status(job_id, ExportStatus.RETRYING)
+
+        new_job = self.repository.create(playlist_id=job.playlist_id, user_id=user_id)
+
+        from app.workers.tasks import process_export
+        task = process_export.delay(
+            str(new_job.id),
+            str(new_job.playlist_id),
+        )
+
+        self.repository.update_celery_task_id(new_job.id, task.id)
+
+        return new_job
+
+    def cancel(
+            self,
+            job_id: UUID,
+            user_id: UUID,
+    ):
+        job = self.find_by_id(job_id, user_id)
+
+        if job.status not in [ExportStatus.PENDING, ExportStatus.PROCESSING]:
+            raise BadRequestException("Only pending or processing jobs can be canceled")
+
+        if job.celery_task_id:
+            from app.workers.tasks import celery_app
+            celery_app.control.revoke(job.celery_task_id, terminate=True)
+
+        self.repository.update_status(job_id, ExportStatus.CANCELED)
+        return self.find_by_id(job_id, user_id)
+
+    @staticmethod
+    def _verify_ownership(
+            job: ExportJob,
+            user_id: UUID
+    ) -> None:
+        if job.user_id != user_id:
+            raise ForbiddenException("You don't have permission to perform this action")

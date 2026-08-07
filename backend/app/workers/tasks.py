@@ -1,15 +1,19 @@
 from uuid import UUID
 
+import asyncio
+
+from app.config.settings import settings
 from app.database.session import SessionLocal
-from app.repositories.download_job_repository import DownloadJobRepository
-from app.repositories.export_job_repository import ExportJobRepository
-from app.repositories.playlist_repository import PlaylistRepository
-from app.repositories.track_repository import TrackRepository
-from app.services.file_service import FileService
-from app.services.track_service import TrackService
-from app.workers.celery_app import celery_app
-from app.services.downloader_service import DownloaderService
-from app.services.download_job_service import DownloadJobService
+from app.downloads.repository import DownloadJobRepository
+from app.emails.schemas import ConfirmEmailChangeSchema, EmailChangedSchema
+from app.exports.repository import ExportJobRepository
+from app.playlists.repository import PlaylistRepository
+from app.tracks.repository import TrackRepository
+from app.common.file_service import FileService
+from app.tracks.service import TrackService
+from app.workers.celery import celery_app
+from app.downloads.processor import DownloaderService
+from app.downloads.service import DownloadJobService
 
 
 @celery_app.task(name="process_download")
@@ -36,7 +40,7 @@ def process_download(job_id: UUID, track_id: UUID):
             track_repository=track_repository,
         )
 
-        downloader_service.process_track(job_id, track_id)
+        downloader_service.process_track(UUID(str(job_id)), UUID(str(track_id)))
     finally:
         db.close()
 
@@ -45,7 +49,7 @@ def process_export(
         job_id: UUID,
         playlist_id: UUID
 ):
-    from app.services.export_job_service import ExportJobService
+    from app.exports.service import ExportJobService
     db = SessionLocal()
     try:
         playlist_repository = PlaylistRepository(db)
@@ -57,6 +61,94 @@ def process_export(
             file_service=file_service
         )
 
-        service.process_export_playlist(job_id=job_id, playlist_id=playlist_id)
+        service.process_export_playlist(
+            job_id=UUID(str(job_id)),
+            playlist_id=UUID(str(playlist_id)),
+        )
     finally:
         db.close()
+
+@celery_app.task(name="send_welcome_email_task")
+def send_welcome_email_task(email_to: str, username: str):
+    from app.emails.service import EmailService
+    from app.emails.schemas import WelcomeEmailSchema
+
+    data = WelcomeEmailSchema(
+        email_to=email_to,
+        username=username,
+        frontend_url=settings.frontend_url + "/login"
+    )
+
+    email_service = EmailService()
+    asyncio.run(email_service.send_welcome(data))
+
+@celery_app.task(name="send_verify_email_task")
+def send_verify_email_task(
+        email_to: str,
+        username: str,
+        url: str
+):
+    from app.emails.service import EmailService
+    from app.emails.schemas import VerifyEmailSchema
+
+    data = VerifyEmailSchema(
+        email_to=email_to,
+        username=username,
+        frontend_url=url
+    )
+
+    email_service = EmailService()
+    asyncio.run(email_service.verify_email(data))
+
+@celery_app.task(name="send_reset_password_email_task")
+def send_reset_password_email_task(
+        email_to: str,
+        username: str,
+        url,
+        token
+):
+    from app.emails.service import EmailService
+    from app.emails.schemas import ResetPasswordEmailSchema
+
+    data = ResetPasswordEmailSchema(
+        email_to=email_to,
+        username=username,
+        frontend_url=url,
+        token=token
+    )
+
+    email_service = EmailService()
+    asyncio.run(email_service.reset_password(data))
+
+@celery_app.task(name="send_password_change_email_task")
+def send_password_change_email_task(
+        email_to: str,
+        username: str,
+        url: str
+):
+    from app.emails.service import EmailService
+    from app.emails.schemas import PasswordChangedEmailSchema
+
+    data = PasswordChangedEmailSchema(
+        email_to=email_to,
+        username=username,
+        frontend_url=url
+    )
+
+    email_service = EmailService()
+    asyncio.run(email_service.password_changed(data))
+
+@celery_app.task(name="send_confirm_email_change")
+def send_confirm_email_change(data: dict):
+    from app.emails.service import EmailService
+
+    data = ConfirmEmailChangeSchema(**data)
+    email_service = EmailService()
+    asyncio.run(email_service.confirm_email_change(data))
+
+@celery_app.task(name="send_email_changed")
+def send_email_changed(data: EmailChangedSchema):
+    from app.emails.service import EmailService
+
+    email_service = EmailService()
+    asyncio.run(email_service.email_changed(data))

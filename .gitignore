@@ -35,3 +35,7 @@ Thumbs.db
 
 # Docker
 docker-data/
+
+# Cookies e Credenciais
+youtube_cookies.txt
+*.txt
