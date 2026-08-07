@@ -1,126 +1,414 @@
-# SoundDesk — Frontend v2
+# 🌐 SoundDesk Web
 
-Plataforma multiusuário para gerenciamento de bibliotecas musicais.
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=nextjs,react,ts,tailwind" />
+</p>
 
-## O que foi adicionado nesta versão
+<p align="center">
+Frontend do <strong>SoundDesk</strong>, desenvolvido com <strong>Next.js</strong>, <strong>React</strong> e <strong>Tailwind CSS</strong>, consumindo a API do projeto para oferecer uma experiência moderna e responsiva.
+</p>
 
-### Autenticação completa
-- Login, Cadastro, Recuperação de senha, Redefinição de senha, Verificação de e-mail
-- JWT com refresh automático via interceptor no `services/api.ts`
-- Cookies HTTPOnly para armazenar tokens
-- Middleware Next.js protegendo todas as rotas privadas
+---
 
-### Novas páginas
-| Rota | Descrição |
-|---|---|
-| `/login` | Login com validação |
-| `/register` | Cadastro |
-| `/forgot-password` | Recuperação por e-mail |
-| `/reset-password` | Redefinição com token |
-| `/verify-email` | Verificação de e-mail |
-| `/downloads` | Gerenciamento de downloads com retry/cancel |
-| `/exports` | Histórico de exportações ZIP |
-| `/shared` | Playlists compartilhadas |
-| `/favorites` | Favoritos |
-| `/profile` | Perfil, avatar, senha, exclusão de conta |
-| `/notifications` | Central de notificações |
+# 📖 Sobre
 
-### Componentes novos
-- `AppHeader` — busca global, sino de notificações, user menu com avatar
-- `NotificationPanel` — dropdown estilo GitHub
-- `GlobalSearch` — overlay com busca instantânea (⌘K)
-- `AuthCard`, `AuthInput`, `AuthLink` — componentes de auth
-- Toast system — notificações globais (success/error/warning/info)
-- `ProfileView` — avatar upload, dados pessoais, alterar senha
+O SoundDesk Web é responsável por toda a experiência do usuário.
 
-### Gráficos no Dashboard
-- Area chart de downloads por semana (Recharts)
-- Pie chart de armazenamento (Recharts)
-- 6 cards de estatísticas
+A aplicação permite:
 
-## Como rodar
+* autenticação;
+* gerenciamento de playlists;
+* download de músicas;
+* importação de playlists;
+* dashboard;
+* gerenciamento da conta;
+* configurações do perfil.
+
+Toda comunicação acontece através da API REST do SoundDesk.
+
+---
+
+# 🏗 Arquitetura
+
+```text
+                   Browser
+
+                      │
+
+                 Next.js App
+
+                      │
+
+        ┌─────────────┼──────────────┐
+        ▼             ▼              ▼
+
+      Pages        Components      Hooks
+
+                      │
+
+                Services (Axios)
+
+                      │
+
+                SoundDesk API
+```
+
+---
+
+# 📂 Estrutura
+
+```text
+src/
+
+├── app/
+│
+├── components/
+│
+├── hooks/
+│
+├── services/
+│
+├── contexts/
+│
+├── lib/
+│
+├── types/
+│
+└── middleware.ts
+```
+
+---
+
+# ✨ Funcionalidades
+
+## 🔐 Autenticação
+
+* Login
+* Cadastro
+* Logout
+* Refresh Token automático
+* Persistência da sessão
+* Rotas protegidas
+* Recuperação de senha
+* Verificação de e-mail
+
+---
+
+## 👤 Perfil
+
+* Informações da conta
+* Upload de avatar
+* Alteração de senha
+* Alteração de e-mail
+* Confirmação de senha para operações sensíveis
+
+---
+
+## 🎵 Playlists
+
+* Criar playlists
+* Editar playlists
+* Excluir playlists
+* Adicionar músicas
+* Remover músicas
+* Exportar playlists
+
+---
+
+## 📥 Downloads
+
+* Download individual
+* Download de playlists
+* Histórico
+* Status em tempo real
+* Indicadores visuais
+
+---
+
+## 🌐 Importação
+
+* Importação por URL
+
+### Plataformas suportadas
+
+* YouTube
+* Spotify
+
+---
+
+## 📊 Dashboard
+
+* Total de playlists
+* Total de músicas
+* Downloads recentes
+* Estatísticas do usuário
+
+---
+
+## 📧 Fluxos de Email
+
+Interface para:
+
+* Verificação de conta
+* Recuperação de senha
+* Alteração de e-mail
+
+---
+
+# 🛠 Tecnologias
+
+## Framework
+
+* Next.js
+
+## UI
+
+* React
+* Tailwind CSS
+
+## Linguagem
+
+* TypeScript
+
+## Comunicação
+
+* Axios
+
+## Gerenciamento de Estado
+
+* React Context
+* React Hooks
+
+---
+
+# 🎨 Interface
+
+O frontend foi desenvolvido seguindo princípios de:
+
+* Design moderno
+* Responsividade
+* Componentização
+* Reutilização de código
+* Boa experiência do usuário
+
+---
+
+# 🔄 Fluxo da Aplicação
+
+```text
+Usuário
+
+↓
+
+Login
+
+↓
+
+JWT
+
+↓
+
+Dashboard
+
+↓
+
+Playlists
+
+↓
+
+Downloads
+
+↓
+
+Importação
+
+↓
+
+Conta
+```
+
+---
+
+# 📦 Organização
+
+Cada funcionalidade é organizada em componentes reutilizáveis.
+
+Exemplo:
+
+```text
+components/
+
+├── ui/
+├── layout/
+├── forms/
+├── dashboard/
+├── playlists/
+├── downloads/
+├── tracks/
+├── profile/
+└── settings/
+```
+
+---
+
+# 🔐 Autenticação
+
+O frontend trabalha com:
+
+* Access Token
+* Refresh Token
+* Renovação automática da sessão
+* Middleware de proteção
+* Redirecionamento automático
+
+---
+
+# 🌐 Comunicação com a API
+
+Todos os dados são obtidos através da API do SoundDesk.
+
+Principais módulos consumidos:
+
+* Auth
+* Users
+* Dashboard
+* Playlists
+* Tracks
+* Downloads
+* Imports
+
+---
+
+# ⚙️ Configuração
+
+## Clonar
+
+```bash
+git clone 'https://github.com/Ts-Joao/SoundDesk.git'
+```
+
+---
+
+## Instalar dependências
+
+```bash
+npm install
+```
+
+ou
+
+```bash
+pnpm install
+```
+
+---
+
+## Configurar ambiente
 
 ```bash
 cp .env.example .env.local
-# Editar NEXT_PUBLIC_API_URL com a URL do seu FastAPI
+```
 
-pnpm install
+Exemplo:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+---
+
+## Executar
+
+```bash
+npm run dev
+```
+
+ou
+
+```bash
 pnpm dev
 ```
 
-## Estrutura das pastas novas
+---
 
+# 📌 Páginas
+
+<details>
+
+<summary><strong>Autenticação</strong></summary>
+
+* Login
+* Cadastro
+* Recuperar senha
+* Redefinir senha
+* Verificar e-mail
+
+</details>
+
+<details>
+
+<summary><strong>Aplicação</strong></summary>
+
+* Dashboard
+* Playlists
+* Playlist
+* Downloads
+* Perfil
+* Configurações
+
+</details>
+
+---
+
+# 🚀 Funcionalidades Futuras
+
+* Tema escuro
+* Internacionalização (i18n)
+* Upload por Drag & Drop
+* PWA
+* Notificações em tempo real
+
+---
+
+# 📱 Responsividade
+
+A interface foi desenvolvida para funcionar em:
+
+* Desktop
+* Notebook
+* Tablet
+* Smartphone
+
+---
+
+# 🤝 Contribuindo
+
+1. Faça um Fork.
+
+2. Crie uma branch.
+
+```bash
+git checkout -b feature/minha-feature
 ```
-src/
-├── app/
-│   ├── (auth)/              ← Rotas públicas (sem sidebar)
-│   │   ├── login/
-│   │   ├── register/
-│   │   ├── forgot-password/
-│   │   ├── reset-password/
-│   │   └── verify-email/
-│   └── (app)/               ← Rotas privadas (com sidebar + header)
-│       ├── downloads/
-│       ├── exports/
-│       ├── shared/
-│       ├── favorites/
-│       ├── profile/
-│       └── notifications/
-│
-├── contexts/
-│   ├── AuthContext.tsx       ← Provider global de auth
-│   └── ToastContext.tsx      ← Provider global de toasts
-│
-├── components/
-│   ├── auth/AuthCard.tsx     ← Componentes base de auth
-│   ├── notifications/        ← NotificationPanel
-│   ├── search/GlobalSearch.tsx
-│   └── layout/AppHeader.tsx  ← Header com busca e user menu
-│
-├── services/
-│   ├── auth.service.ts       ← Login, register, refresh, etc.
-│   ├── user.service.ts       ← Perfil, avatar, senha
-│   ├── notification.service.ts
-│   └── dashboard.service.ts
-│
-├── hooks/
-│   ├── notifications/useNotifications.ts
-│   ├── profile/useProfile.ts
-│   └── dashboard/useDashboard.ts
-│
-├── lib/auth/
-│   └── tokenManager.ts       ← Gerenciamento de cookies JWT
-│
-├── middleware.ts              ← Proteção de rotas
-└── types/
-    ├── auth.ts
-    ├── notifications.ts
-    └── dashboard.ts
+
+3. Commit.
+
+```bash
+git commit -m "feat: minha feature"
 ```
 
-## Integração com FastAPI
+4. Push.
 
-O frontend espera os seguintes endpoints:
+```bash
+git push origin feature/minha-feature
+```
 
-### Auth
-- `POST /api/auth/login` → `{ access_token, refresh_token }`
-- `POST /api/auth/register`
-- `POST /api/auth/refresh` → `{ access_token, refresh_token }`
-- `POST /api/auth/logout`
-- `GET  /api/auth/me` → `{ id, name, email, avatar }`
-- `POST /api/auth/forgot-password`
-- `POST /api/auth/reset-password`
-- `POST /api/auth/verify-email`
+5. Abra um Pull Request.
 
-### Usuário
-- `GET    /api/users/me`
-- `PATCH  /api/users/me`
-- `POST   /api/users/me/avatar`
-- `POST   /api/users/me/change-password`
-- `DELETE /api/users/me`
+---
 
-### Notificações
-- `GET   /api/notifications`
-- `PATCH /api/notifications/:id/read`
-- `PATCH /api/notifications/read-all`
-- `DELETE /api/notifications/:id`
+# 👨‍💻 Desenvolvedor
+
+Desenvolvido por **João Teixeira** como parte do projeto **SoundDesk**.
+
+Para mais informações sobre a arquitetura completa, consulte o **README** do repositório principal.
