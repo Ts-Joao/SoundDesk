@@ -17,3 +17,4 @@ pydantic-settings
 pillow
 python-multipart
 spotipy
+slowapi
